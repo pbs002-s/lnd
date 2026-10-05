@@ -1,0 +1,141 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum MutationStatus {
+  SUBMITTED
+  KANUNGO_VERIFICATION
+  AC_LAND_HEARING
+  DCR_PAYMENT_PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PaymentStatus {
+  PENDING
+  VERIFIED
+  RECONCILED
+  FAILED
+  REFUNDED
+}
+
+model Parcel {
+  id              String         @id
+  division        String
+  district        String
+  upazila         String
+  mouza           String
+  jlNumber        Int
+  khatianNo       String
+  dagNo           String
+  holdingNo       String
+  landClass       String
+  areaDecimal     Float
+  currentOwner    String
+  nidNumber       String
+  phone           String
+  email           String?
+  geojsonBoundary Json?
+  
+  mutations       Mutation[]
+  taxRecords      TaxRecord[]
+  timelineEvents  TimelineEvent[]
+  documents       Document[]
+  discrepancies   Discrepancy[]
+  complaints      Complaint[]
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model Mutation {
+  id              String         @id @default(uuid())
+  caseNumber      String         @unique
+  parcelId        String
+  parcel          Parcel         @relation(fields: [parcelId], references: [id])
+  applicantName   String
+  applicantNid    String
+  applicantPhone  String
+  proposedOwner   String
+  status          MutationStatus @default(SUBMITTED)
+  currentStage    String
+  hearingDate     DateTime?
+  dcrAmount       Float?
+  remarks         String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model TaxRecord {
+  id              String        @id @default(uuid())
+  parcelId        String
+  parcel          Parcel        @relation(fields: [parcelId], references: [id])
+  fiscalYear      String
+  annualDemandBDT Float
+  arrearAmountBDT Float         @default(0)
+  totalDueBDT     Float
+  paidAmountBDT   Float         @default(0)
+  status          PaymentStatus @default(PENDING)
+  trxId           String?       @unique
+  paymentMethod   String?
+  dakhilaNumber   String?       @unique
+  qrCodeUrl       String?
+  paymentDate     DateTime?
+  reconciledAt    DateTime?
+  reconciledBy    String?
+}
+
+model TimelineEvent {
+  id          String   @id @default(uuid())
+  parcelId    String
+  parcel      Parcel   @relation(fields: [parcelId], references: [id])
+  eventType   String
+  title       String
+  description String
+  actor       String
+  referenceDoc String?
+  eventDate   DateTime @default(now())
+}
+
+model Discrepancy {
+  id            String   @id @default(uuid())
+  parcelId      String
+  parcel        Parcel   @relation(fields: [parcelId], references: [id])
+  mismatchType  String
+  sourceA       String
+  sourceB       String
+  severity      String
+  isResolved    Boolean  @default(false)
+  flaggedBy     String   @default("n8n-land-recon-engine")
+  createdAt     DateTime @default(now())
+}
+
+model Complaint {
+  id            String   @id @default(uuid())
+  trackingNo    String   @unique
+  parcelId      String
+  parcel        Parcel   @relation(fields: [parcelId], references: [id])
+  complainant   String
+  phone         String
+  category      String
+  description   String
+  assignedOffice String
+  status        String   @default("ROUTED")
+  createdAt     DateTime @default(now())
+}
+
+model Document {
+  id          String   @id @default(uuid())
+  parcelId    String
+  parcel      Parcel   @relation(fields: [parcelId], references: [id])
+  docType     String
+  fileName    String
+  fileUrl     String
+  ocrText     String?
+  uploadedAt  DateTime @default(now())
+}

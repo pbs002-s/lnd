@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="bn">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#FBFAF6" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0C1713" media="(prefers-color-scheme: dark)" />
+    <title>ভূমি সেবা — One parcel, one record</title>
+    <meta
+      name="description"
+      content="A parcel-centric view of Bangladesh land records: ownership, নামজারি, ভূমি উন্নয়ন কর, maps and history under one Parcel ID."
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- design.md typography: Tiro Bangla (headings), Noto Sans Bengali (body),
+         Inter (English), JetBrains Mono (identifiers) -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+Bengali:wght@300;400;500;600;700&family=Tiro+Bangla:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+
+    <script>
+      // Resolve theme before first paint — no flash of the wrong sheet.
+      (function () {
+        try {
+          var saved = localStorage.getItem('bhumi.theme');
+          var sys = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var dark = saved ? saved === 'dark' : sys;
+          if (dark) document.documentElement.classList.add('dark');
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
