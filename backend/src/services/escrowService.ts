@@ -4,6 +4,8 @@
  * statutory tax deductions, and conditional fund disbursement.
  */
 
+import { InterRegistryLockEngine } from './interRegistryLockEngine';
+
 export type EscrowStage =
   | 'OFFER_PENDING'
   | 'LAND_LOCKED'
@@ -236,6 +238,21 @@ export class EscrowService {
     };
 
     IN_MEMORY_ESCROW_CONTRACTS.unshift(newContract);
+
+    // Synchronize lock with sovereign InterRegistryLockEngine
+    InterRegistryLockEngine.acquireLock({
+      parcelId: params.parcelId,
+      lockType: 'ESCROW_CONVEYANCE',
+      lockingAuthority: 'Smart LandLock Escrow Engine',
+      authorityCategory: 'LAND_MINISTRY',
+      initiatorNid: params.buyerNid,
+      initiatorName: params.buyerName,
+      referenceNumber: contractId,
+      statutoryBasis: 'Zero-Trust Escrow Protocol & Registration Act 1908',
+      orderSummaryEn: `Active purchase escrow initiated for BDT ${total.toLocaleString()}. Secondary conveyance frozen.`,
+      orderSummaryBn: `মোট ${total.toLocaleString()} টাকা মূল্যে জমি ক্রয় বায়না কার্যকর। দ্বৈত বিক্রয় রোধে জমি লক।`,
+    });
+
     return newContract;
   }
 
@@ -369,6 +386,17 @@ export class EscrowService {
       actor: 'Escrow Settlement Engine',
       referenceNumber: `SETTLE-${contract.id}`,
     });
+
+    // Release escrow lock in sovereign InterRegistryLockEngine
+    const activeLocks = InterRegistryLockEngine.getActiveLocks(contract.parcelId);
+    const escrowLock = activeLocks.find((l) => l.lockType === 'ESCROW_CONVEYANCE');
+    if (escrowLock) {
+      InterRegistryLockEngine.releaseLock({
+        lockToken: escrowLock.lockToken,
+        releaseAuthority: 'Escrow Settlement Protocol',
+        releaseReference: `SETTLE-${contract.id}`,
+      });
+    }
 
     return contract;
   }
