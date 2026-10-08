@@ -3,6 +3,9 @@ import { PrismaClient } from '@prisma/client';
 import { CadastralService } from '../services/cadastralService';
 import { LitigationService } from '../services/litigationService';
 import { MOUZA_BENCHMARK_RATES } from '../services/deedVerifier';
+import { InterRegistryLockEngine } from '../services/interRegistryLockEngine';
+import { CibGateway } from '../services/gateways/cibGateway';
+import { JudicialGateway } from '../services/gateways/judicialGateway';
 import { ok, fail } from '../lib/respond';
 
 const router = Router();
@@ -199,10 +202,22 @@ router.get('/:parcelId/due-diligence', async (req: Request, res: Response) => {
       (m) => m.status !== 'APPROVED' && m.status !== 'REJECTED'
     );
 
-    const score = hasUnresolvedFlags ? 65 : hasTaxDue ? 82 : 98;
-    const overallVerdict = hasUnresolvedFlags
-      ? 'CAUTION_REQUIRED'
-      : hasPendingMutation
+    // Query live 4-agency state from InterRegistryLockEngine & Gateways
+    const cibInquiry = CibGateway.inquireCollateral(parcelId);
+    const judicialInquiry = JudicialGateway.queryDocket(parcelId);
+    const activeLocks = InterRegistryLockEngine.getActiveLocks(parcelId);
+    const hasActiveStay = judicialInquiry.hasActiveInjunction;
+    const hasMortgage = cibInquiry.hasActiveMortgage;
+
+    let score = 98;
+    if (hasActiveStay) score = Math.min(score, 35);
+    else if (hasUnresolvedFlags) score = Math.min(score, 65);
+    else if (hasMortgage) score = Math.min(score, 75);
+    else if (hasTaxDue) score = Math.min(score, 85);
+
+    const overallVerdict = hasActiveStay
+      ? 'DISPUTED_RESTRICTED'
+      : hasUnresolvedFlags || hasPendingMutation || hasMortgage
       ? 'CAUTION_REQUIRED'
       : 'APPROVED_FOR_TRANSACTION';
 
@@ -240,10 +255,18 @@ router.get('/:parcelId/due-diligence', async (req: Request, res: Response) => {
         id: 'dd-4',
         name: 'Mortgage, Lien & Court Injunction Check',
         nameBn: 'ব্যাংক দায়মুক্তি ও দেওয়ানি নিষেধাজ্ঞা যাচাই',
-        status: 'PASS',
-        finding: 'No active mortgage charges or civil court injunctions on record.',
-        detail: 'Scanned against Bangladesh Bank CIB register and Civil Court cause lists.',
-        statuteRef: 'Transfer of Property Act 1882, Sec 52',
+        status: hasActiveStay ? 'FAIL' : hasMortgage ? 'WARNING' : 'PASS',
+        finding: hasActiveStay
+          ? `Active Civil Court Injunction under CPC Order 39 in Suit #${judicialInquiry.activeStayOrders[0].caseNumber} (${judicialInquiry.activeStayOrders[0].courtName}). Transfer barred.`
+          : hasMortgage
+          ? `Active 1st charge registered by ${cibInquiry.primaryChargeHolder} (BDT ${cibInquiry.totalSanctionedAmountBDT.toLocaleString()}). Requires Bank NOC prior to transfer.`
+          : 'No active mortgage charges or civil court injunctions on record.',
+        detail: hasActiveStay
+          ? 'Stay order prohibits deed registration and mutation under Section 52 Transfer of Property Act.'
+          : hasMortgage
+          ? 'Scanned against Bangladesh Bank CIB II & Collateral Registry. Prior institutional lien active.'
+          : 'Scanned against Bangladesh Bank CIB register and Civil Court cause lists.',
+        statuteRef: hasActiveStay ? 'Code of Civil Procedure 1908 (Order 39) & TP Act Sec 52' : 'Transfer of Property Act 1882, Sec 58',
       },
       {
         id: 'dd-5',
