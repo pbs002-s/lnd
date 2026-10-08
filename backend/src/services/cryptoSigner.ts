@@ -142,6 +142,36 @@ export class CryptoSignerService {
   }
 
   /**
+   * Sign raw data string using Ed25519
+   */
+  public static signString(data: string): { signature: string; publicKey: string } {
+    const { privateKey, publicKey } = this.getKeyPair();
+    const sig = crypto.sign(null, Buffer.from(data, 'utf-8'), privateKey);
+    return {
+      signature: sig.toString('base64'),
+      publicKey: publicKey.export({ type: 'spki', format: 'der' }).toString('base64'),
+    };
+  }
+
+  /**
+   * Verify an Ed25519 signature on raw data string
+   */
+  public static verifyString(
+    data: string,
+    signatureBase64: string,
+    publicKeyBase64?: string
+  ): boolean {
+    try {
+      const pubKeyDer = Buffer.from(publicKeyBase64 || this.getPublicKeyBase64(), 'base64');
+      const publicKey = crypto.createPublicKey({ key: pubKeyDer, format: 'der', type: 'spki' });
+      const sigBuffer = Buffer.from(signatureBase64, 'base64');
+      return crypto.verify(null, Buffer.from(data, 'utf-8'), publicKey, sigBuffer);
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Get server authoritative public key
    */
   public static getPublicKeyBase64(): string {
