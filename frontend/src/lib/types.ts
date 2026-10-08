@@ -553,4 +553,352 @@ export interface EpochComparisonResult {
   generatedAt: string;
 }
 
+// --- Phase 5: Digital Evidence & Tamper-Evident Timeline Types ---
 
+export type EvidenceModality = 'MESSAGE' | 'FILE' | 'LOCATION' | 'DEVICE_EVENT';
+
+export type EvidenceActorRole =
+  | 'AC_LAND'
+  | 'KANUNGO'
+  | 'SURVEYOR_AMIN'
+  | 'CITIZEN'
+  | 'SYSTEM_RADAR'
+  | 'SUB_REGISTRAR';
+
+export interface EvidenceActor {
+  name: string;
+  role: EvidenceActorRole;
+  nidOrBadge: string;
+  ipAddress?: string;
+  phone?: string;
+}
+
+export interface EvidencePayload {
+  modality: EvidenceModality;
+  actor: EvidenceActor;
+  capturedAt: string;
+  metadata: {
+    // MESSAGE metadata
+    sender?: string;
+    recipient?: string;
+    messageBody?: string;
+    messageBodyBn?: string;
+    channel?: 'SMS_GATEWAY' | 'PORTAL_SUMMONS' | 'WHATSAPP_AUDIT' | 'OFFICIAL_ORDER';
+    deliveryStatus?: 'DELIVERED' | 'READ' | 'PENDING';
+
+    // FILE metadata
+    fileName?: string;
+    mimeType?: string;
+    fileSizeBytes?: number;
+    fileSha256?: string;
+    fileUrl?: string;
+    exifGps?: { lat: number; lng: number; altitudeMeters?: number };
+    fileDescription?: string;
+
+    // LOCATION metadata
+    latitude?: number;
+    longitude?: number;
+    altitudeMeters?: number;
+    accuracyRadiusMeters?: number;
+    speedKmh?: number;
+    headingDegrees?: number;
+    isMockGpsDetected?: boolean;
+    mouzaPegRef?: string;
+    deviceSatelliteCount?: number;
+
+    // DEVICE_EVENT metadata
+    deviceModel?: string;
+    deviceIdHash?: string;
+    osVersion?: string;
+    appVersion?: string;
+    batteryLevelPercent?: number;
+    networkType?: '4G_LTE' | '5G' | 'WIFI' | 'OFFLINE_CACHE';
+    isRootedOrJailbroken?: boolean;
+    deviceEventType?: 'APP_LOGIN' | 'GEO_CACHE_SYNC' | 'MOCK_GPS_PROBE' | 'BATTERY_TELEMETRY' | 'SECURE_BOOT';
+    hardwareSecurityTier?: string;
+
+    [key: string]: any;
+  };
+}
+
+export interface EvidenceBlock {
+  blockIndex: number;
+  blockId: string;
+  parcelId: string;
+  timestamp: string;
+  modality: EvidenceModality;
+  title: string;
+  summaryBn: string;
+  payload: EvidencePayload;
+  payloadHash: string;
+  previousHash: string;
+  currentHash: string;
+  signature: string;
+  publicKey: string;
+  isTampered?: boolean;
+  tamperDetails?: string;
+}
+
+export interface BlockValidationResult {
+  blockIndex: number;
+  hashValid: boolean;
+  prevHashValid: boolean;
+  signatureValid: boolean;
+  tamperedReason?: string;
+}
+
+export interface ChainVerificationReport {
+  isValid: boolean;
+  parcelId: string;
+  totalBlocks: number;
+  genesisHash: string;
+  latestHash: string;
+  tamperedBlockIndex?: number;
+  errorReason?: string;
+  tamperDetails?: string;
+  verifiedAt: string;
+  blockValidations: BlockValidationResult[];
+}
+
+export interface CourtDossier {
+  dossierId: string;
+  parcelId: string;
+  exportedAt: string;
+  qrPayload: string;
+  verification: ChainVerificationReport;
+  chainLength: number;
+  blocks: EvidenceBlock[];
+  legalDisclaimerBn: string;
+  legalDisclaimerEn: string;
+}
+
+// --- AI LandGuard Verification Types ---
+export type LandGuardVerdict = 
+  | 'CLEARED_PROTECTED'
+  | 'CAUTION_ADVISORY'
+  | 'CRITICAL_FRAUD_FLAGGED';
+
+export type LandGuardPillarStatus = 'PASS' | 'WARNING' | 'FAIL';
+
+export interface LandGuardPillarEvaluation {
+  pillarId: 'DEED_FORENSICS' | 'DRONE_CADASTRE' | 'KHAS_PROXIMITY' | 'EVIDENCE_CHAIN' | 'LAND_LOCK';
+  titleEn: string;
+  titleBn: string;
+  status: LandGuardPillarStatus;
+  score: number;
+  weightPercent: number;
+  weightedScore: number;
+  highlightMetric: string;
+  summaryEn: string;
+  summaryBn: string;
+  drillDownTarget: 'deed' | 'drone' | 'khas' | 'evidence' | 'lock';
+}
+
+export interface LandGuardAuditResult {
+  parcelId: string;
+  mouza: string;
+  upazila: string;
+  district: string;
+  ownerName: string;
+  khatianNo: string;
+  dagNo: string;
+  areaDecimal: number;
+  trustScore: number;
+  verdict: LandGuardVerdict;
+  verdictTitleEn: string;
+  verdictTitleBn: string;
+  aiExplanationEn: string;
+  aiExplanationBn: string;
+  isLocked: boolean;
+  pillars: LandGuardPillarEvaluation[];
+  auditedAt: string;
+  qrPayload: string;
+}
+
+export interface LandGuardDossier {
+  dossierId: string;
+  parcelId: string;
+  audit: LandGuardAuditResult;
+  exportedAt: string;
+  qrPayload: string;
+  issuerAuthority: string;
+  legalDisclaimerBn: string;
+  legalDisclaimerEn: string;
+}
+
+/* =============================================================
+ * INTER-REGISTRY LOCK & TITLE ENCUMBRANCE TYPES
+ * ============================================================= */
+
+export type LockType =
+  | 'OWNER_BIOMETRIC'
+  | 'ESCROW_CONVEYANCE'
+  | 'JUDICIAL_STAY'
+  | 'MORTGAGE_LIEN'
+  | 'KHAS_DISPUTE';
+
+export interface RegistryLockRecord {
+  id: string;
+  lockToken: string;
+  parcelId: string;
+  lockType: LockType;
+  status: 'ACTIVE' | 'RELEASED' | 'VACATED' | 'EXPIRED';
+  priority: number;
+  lockingAuthority: string;
+  authorityCategory: 'JUDICIARY' | 'BANKING' | 'LAND_MINISTRY' | 'CITIZEN';
+  initiatorNid?: string;
+  initiatorName: string;
+  referenceNumber: string;
+  statutoryBasis: string;
+  orderSummaryEn: string;
+  orderSummaryBn: string;
+  acquiredAt: string;
+  expiresAt?: string;
+  releasedAt?: string;
+  releaseAuthority?: string;
+  releaseReference?: string;
+  ed25519Signature: string;
+  auditHash: string;
+}
+
+export interface CibLienRecord {
+  cibTrackingToken: string;
+  parcelId: string;
+  bankCode: string;
+  bankName: string;
+  branchName: string;
+  routingNumber: string;
+  sanctionedAmountBDT: number;
+  outstandingBalanceBDT: number;
+  chargeRank: number;
+  isPariPassuConsent: boolean;
+  status: 'ACTIVE_LIEN' | 'NOC_ISSUED' | 'DISCHARGED' | 'DEFAULT_AUCTION';
+  nocReferenceNumber?: string;
+  sanctionDate: string;
+  mortgageDeedNumber?: string;
+  borrowerNid: string;
+  borrowerName: string;
+}
+
+export interface CibInquiryResult {
+  parcelId: string;
+  hasActiveMortgage: boolean;
+  totalMortgageCount: number;
+  totalSanctionedAmountBDT: number;
+  primaryChargeHolder?: string;
+  liens: CibLienRecord[];
+  cibScore: number;
+  canPledgeNewMortgage: boolean;
+  rejectionReason?: string;
+  inquiryTimestamp: string;
+  inquiryReference: string;
+}
+
+export interface InterAgencyDashboardState {
+  parcelId: string;
+  isFullyClear: boolean;
+  overallStatusEn: 'CLEAN_UNENCUMBERED' | 'DISPUTED_STAY_LOCKED' | 'ESCROW_FROZEN' | 'BANK_MORTGAGED' | 'OWNER_LOCKED';
+  overallStatusBn: string;
+  activeLockCount: number;
+  locks: RegistryLockRecord[];
+  agencyStatuses: {
+    landMinistry: {
+      status: 'UNRESTRICTED' | 'HEARING_FROZEN' | 'PENDING_MUTATION';
+      canMutate: boolean;
+      activeKhatian: string;
+      summaryEn: string;
+      summaryBn: string;
+    };
+    lawMinistry: {
+      status: 'UNRESTRICTED' | 'REGISTRATION_BARRED' | 'CONDITIONAL_NOC';
+      canConvey: boolean;
+      subRegistryOffice: string;
+      summaryEn: string;
+      summaryBn: string;
+    };
+    judiciary: {
+      status: 'CLEAN' | 'INJUNCTION_ACTIVE' | 'LIS_PENDENS';
+      hasInjunction: boolean;
+      courtName?: string;
+      caseNumber?: string;
+      summaryEn: string;
+      summaryBn: string;
+    };
+    centralBankCib: {
+      status: 'NO_LIEN' | 'FIRST_CHARGE_ACTIVE' | 'NOC_RELEASED';
+      hasActiveMortgage: boolean;
+      primaryBank?: string;
+      sanctionedBdt: number;
+      summaryEn: string;
+      summaryBn: string;
+    };
+  };
+  lastSyncedAt: string;
+}
+
+export interface Nec30YearDeedEntry {
+  periodYears: string;
+  surveyEpoch: 'CS (1920)' | 'SA (1956)' | 'RS (1978)' | 'BS (2015)' | 'BDS (2026)';
+  deedOrKhatianRef: string;
+  grantor: string;
+  grantee: string;
+  transferType: string;
+  status: 'CLEAR_VALID' | 'ENCUMBERED' | 'DISPUTED';
+}
+
+export interface NonEncumbranceCertificate {
+  certificateNumber: string;
+  parcelId: string;
+  mouza: string;
+  upazila: string;
+  district: string;
+  khatianNo: string;
+  dagNo: string;
+  areaDecimal: number;
+  currentOwnerName: string;
+  currentOwnerNid: string;
+  applicantName: string;
+  applicantNid: string;
+  purpose: string;
+  isFullyUnencumbered: boolean;
+  encumbranceStatusEn: 'CLEAN_UNENCUMBERED' | 'CONDITIONAL_CAUTION' | 'STRICTLY_ENCUMBERED';
+  encumbranceStatusBn: string;
+  registryClearances: {
+    cibBankMortgages: {
+      status: 'PASS' | 'FAIL';
+      findingEn: string;
+      findingBn: string;
+      activeLienCount: number;
+      totalLienBdt: number;
+    };
+    judicialCourts: {
+      status: 'PASS' | 'FAIL';
+      findingEn: string;
+      findingBn: string;
+      activeInjunctionCount: number;
+    };
+    subRegistryArchives: {
+      status: 'PASS' | 'FAIL';
+      findingEn: string;
+      findingBn: string;
+      historicalDeedCount: number;
+    };
+    governmentKhasCanal: {
+      status: 'PASS' | 'FAIL';
+      findingEn: string;
+      findingBn: string;
+      khasRiskLevel: string;
+    };
+  };
+  thirtyYearAuditChain: Nec30YearDeedEntry[];
+  issuedAt: string;
+  expiresAt: string;
+  issuingAuthorityEn: string;
+  issuingAuthorityBn: string;
+  statutoryDisclaimerEn: string;
+  statutoryDisclaimerBn: string;
+  ed25519Signature: string;
+  verificationHash: string;
+  publicKeyBase64: string;
+  qrPayload: string;
+}
