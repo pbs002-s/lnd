@@ -8,6 +8,8 @@ import { decimals, sqft, maskNid, relativeDays, shortDate } from '../../lib/form
 import DocumentViewerModal from '../../components/DocumentViewerModal';
 import LandCalculatorModal from '../../components/LandCalculatorModal';
 import DisputeModal from '../../components/DisputeModal';
+import DigitalEvidenceModal from '../../components/DigitalEvidenceModal';
+import AILandGuardModal from '../../components/AILandGuardModal';
 
 const EVENT_TONE: Record<string, 'state' | 'amber' | 'seal' | 'indigo'> = {
   MUTATION_APPROVED: 'state',
@@ -29,6 +31,8 @@ export default function Overview({ parcel, onChanged }: { parcel: Parcel; onChan
   const [selectedDoc, setSelectedDoc] = useState<LandDocument | null>(null);
   const [calcOpen, setCalcOpen] = useState(false);
   const [disputeOpen, setDisputeOpen] = useState(false);
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
+  const [landGuardOpen, setLandGuardOpen] = useState(false);
 
   return (
     <>
@@ -99,6 +103,16 @@ export default function Overview({ parcel, onChanged }: { parcel: Parcel; onChan
             <Panel
               label={t('Activity & Judicial History', 'কার্যক্রম ও বিচারিক ইতিহাস')}
               meta={`${events.length} ${t('events', 'টি ঘটনা')}`}
+              action={
+                <Button
+                  size="sm"
+                  onClick={() => setEvidenceOpen(true)}
+                  className="flex items-center gap-1.5 border border-emerald-500/40 bg-emerald-950/40 text-emerald-300 hover:bg-emerald-900/60"
+                >
+                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+                  {t('Tamper-Evident Ledger', 'ডিজিটাল সাক্ষ্য লেজার')}
+                </Button>
+              }
             >
               {events.length === 0 ? (
                 <p className="text-sm text-ink-3">
@@ -175,11 +189,29 @@ export default function Overview({ parcel, onChanged }: { parcel: Parcel; onChan
           </Reveal>
 
           <Reveal delay={160}>
-            <div className="flex gap-3 border border-line bg-sheet px-4 py-3.5">
-              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-state" />
-              <p className="text-xs text-ink-3">
-                Authoritative record synchronized with Ministry of Land & DLRS National Cadastre.
-              </p>
+            <div className="flex flex-wrap items-center justify-between gap-3 border border-line bg-sheet px-4 py-3.5">
+              <div className="flex items-center gap-3">
+                <ShieldCheck className="h-5 w-5 shrink-0 text-state" />
+                <div>
+                  <p className="text-xs font-semibold text-ink">
+                    {t('AI LandGuard Multi-Engine Verification Active', 'এআই ল্যান্ডগার্ড বহুস্তরীয় যাচাইকরণ সক্রিয়')}
+                  </p>
+                  <p className="text-2xs text-ink-3">
+                    {t(
+                      'Tamper-evident cryptographic ledger & multi-epoch cadastral drift audit.',
+                      'ক্রিপ্টোগ্রাফিক অপরিবর্তনীয় লেজার এবং মাল্টি-ইপক ক্যাডাস্ট্রাল ড্রোন নিরীক্ষা।'
+                    )}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="secondary" onClick={() => setEvidenceOpen(true)}>
+                  {t('Evidence Ledger', 'সাক্ষ্য লেজার')}
+                </Button>
+                <Button size="sm" variant="primary" onClick={() => setLandGuardOpen(true)}>
+                  {t('AI LandGuard', 'এআই ল্যান্ডগার্ড')}
+                </Button>
+              </div>
             </div>
           </Reveal>
         </div>
@@ -208,6 +240,26 @@ export default function Overview({ parcel, onChanged }: { parcel: Parcel; onChan
         defaultOwner={parcel.currentOwner}
         defaultPhone={parcel.phone}
         onSuccess={() => {
+          if (onChanged) onChanged();
+        }}
+      />
+
+      {/* Digital Evidence & Tamper-Evident Ledger Modal */}
+      <DigitalEvidenceModal
+        open={evidenceOpen}
+        onClose={() => setEvidenceOpen(false)}
+        defaultParcelId={parcel.id}
+        defaultKhatianNo={parcel.khatianNo}
+      />
+
+      {/* AI LandGuard Unified Fraud Verification Modal */}
+      <AILandGuardModal
+        open={landGuardOpen}
+        onClose={() => setLandGuardOpen(false)}
+        parcelId={parcel.id}
+        khatianNo={parcel.khatianNo}
+        onOpenDigitalEvidence={() => setEvidenceOpen(true)}
+        onStatusChanged={() => {
           if (onChanged) onChanged();
         }}
       />
