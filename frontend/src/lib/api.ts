@@ -43,6 +43,22 @@ import type {
   SurveyRecord,
   CadastralEpoch,
   EpochComparisonResult,
+  EvidenceModality,
+  EvidenceActor,
+  EvidencePayload,
+  EvidenceBlock,
+  BlockValidationResult,
+  ChainVerificationReport,
+  CourtDossier,
+  LandGuardVerdict,
+  LandGuardPillarEvaluation,
+  LandGuardAuditResult,
+  LandGuardDossier,
+  InterAgencyDashboardState,
+  RegistryLockRecord,
+  CibInquiryResult,
+  CibLienRecord,
+  NonEncumbranceCertificate,
 } from './types';
 
 export type DataSource = 'live' | 'demo';
@@ -1655,5 +1671,1048 @@ export async function compareDroneEpochs(parcelId: string): Promise<EpochCompari
   }
 }
 
+// --- Phase 5: Digital Evidence & Tamper-Evident Ledger Endpoints ---
 
+const fallbackEvidenceBlocks: EvidenceBlock[] = [
+  {
+    blockIndex: 0,
+    blockId: 'ev-seed-0',
+    parcelId: 'BD-DHK-SAV-000001',
+    timestamp: '2026-02-01T08:30:00.000Z',
+    modality: 'DEVICE_EVENT',
+    title: 'Genesis Anchor: Savar Circle Jurisdictional Root',
+    summaryBn: 'ডিজিটাল এভিডেন্স লেজার সূচনা: সহকারী কমিশনার (ভূমি) সাভার রাজস্ব সার্কেল',
+    payload: {
+      modality: 'DEVICE_EVENT',
+      actor: {
+        name: 'Savar Upazila Land Office Node',
+        role: 'AC_LAND',
+        nidOrBadge: 'AC-SAVAR-ADM-01',
+        ipAddress: '10.24.112.5',
+      },
+      capturedAt: '2026-02-01T08:30:00.000Z',
+      metadata: {
+        deviceEventType: 'SECURE_BOOT',
+        jurisdiction: 'Dhaka Division, Savar Upazila, Savar Mouza (JL-42)',
+        appVersion: 'DEMS-GovBD v3.4.1',
+      },
+    },
+    payloadHash: '4a5e2f9d8a1c3b5e7f9a2c4e6d8b0a1c3e5f7a9b1c3d5e7f9a1b3c5d7e9f1a3b',
+    previousHash: '0000000000000000000000000000000000000000000000000000000000000000',
+    currentHash: '383c9da1169c29420e1b75b7842ab122cd01d57b1363f4f1047a42bd26d1c8d6',
+    signature: 'MEUCIQDh2...ed25519-root-sig-gov-bd...',
+    publicKey: 'MCowBQYDK2VwAyEA9f518a2...spki-pubkey...',
+  },
+  {
+    blockIndex: 1,
+    blockId: 'ev-seed-1',
+    parcelId: 'BD-DHK-SAV-000001',
+    timestamp: '2026-02-05T09:15:00.000Z',
+    modality: 'MESSAGE',
+    title: 'AC Land Hearing Summons Dispatched via SMS Gateway',
+    summaryBn: 'সহকারী কমিশনার (ভূমি) শুনানির নোটিশ: আবেদনকারীকে দলিল ও পর্চাসহ হাজির হওয়ার তলব',
+    payload: {
+      modality: 'MESSAGE',
+      actor: {
+        name: 'Khandakar Mizanur Rahman, BCS (Admin)',
+        role: 'AC_LAND',
+        nidOrBadge: 'BCS-36-88912',
+        phone: '+8801711223344',
+      },
+      capturedAt: '2026-02-05T09:15:00.000Z',
+      metadata: {
+        channel: 'SMS_GATEWAY',
+        sender: 'BD-GOVT-LAND',
+        recipient: '+8801712000000',
+        messageBody: 'Notification: Mutation Case 2026/MUT-SAV-0042 hearing scheduled on 18 Feb 2026 at 11:00 AM at Savar Upazila Land Office. Bring original Dalil #4821.',
+        messageBodyBn: 'বিজ্ঞপ্তি: খারিজ মোকদ্দমা ২০২৬/MUT-SAV-০০৪২ এর শুনানি ১৮ ফেব্রুয়ারি ২০২৬ সকাল ১১:০০ টায় ধার্য করা হয়েছে। মূল দলিল নং ৪৮২১ সঙ্গে আনুন।',
+        deliveryStatus: 'DELIVERED',
+        telecomGatewayId: 'BTCL-GOV-SMS-884129',
+      },
+    },
+    payloadHash: 'b1c3d5e7f9a1b3c5d7e9f1a3b4a5e2f9d8a1c3b5e7f9a2c4e6d8b0a1c3e5f7a9',
+    previousHash: '383c9da1169c29420e1b75b7842ab122cd01d57b1363f4f1047a42bd26d1c8d6',
+    currentHash: 'a9b1c3d5e7f9a1b3c5d7e9f1a3b4a5e2f9d8a1c3b5e7f9a2c4e6d8b0a1c3e5f7',
+    signature: 'RUIwQQId...sms-gateway-attested-sig...',
+    publicKey: 'MCowBQYDK2VwAyEA9f518a2...spki-pubkey...',
+  },
+  {
+    blockIndex: 2,
+    blockId: 'ev-seed-2',
+    parcelId: 'BD-DHK-SAV-000001',
+    timestamp: '2026-02-12T10:45:22.000Z',
+    modality: 'LOCATION',
+    title: 'Field Surveyor On-Site GPS Fix at Northern Mouza Benchmark',
+    summaryBn: 'আমিন সরজমিন সীমানা জিপিএস ফিক্স: উত্তর সীমানা সীমানা খুঁটি (Peg P-01)',
+    payload: {
+      modality: 'LOCATION',
+      actor: {
+        name: 'Md. Abdur Rahim (Revenue Amin)',
+        role: 'SURVEYOR_AMIN',
+        nidOrBadge: 'AMIN-DHK-2018/88',
+        phone: '+8801819345678',
+      },
+      capturedAt: '2026-02-12T10:45:22.000Z',
+      metadata: {
+        latitude: 23.85124,
+        longitude: 90.26145,
+        altitudeMeters: 14.8,
+        accuracyRadiusMeters: 1.2,
+        speedKmh: 0.4,
+        headingDegrees: 18.5,
+        isMockGpsDetected: false,
+        mouzaPegRef: 'P-01 (উত্তর-পূর্ব কর্নার সীমানা পিলার)',
+        deviceSatelliteCount: 16,
+      },
+    },
+    payloadHash: 'f7a9b1c3d5e7f9a1b3c5d7e9f1a3b4a5e2f9d8a1c3b5e7f9a2c4e6d8b0a1c3e5',
+    previousHash: 'a9b1c3d5e7f9a1b3c5d7e9f1a3b4a5e2f9d8a1c3b5e7f9a2c4e6d8b0a1c3e5f7',
+    currentHash: 'c4e6d8b0a1c3e5f7a9b1c3d5e7f9a1b3c5d7e9f1a3b4a5e2f9d8a1c3b5e7f9a2',
+    signature: 'PUIwEAIe...rtk-gnss-carrier-phase-sig...',
+    publicKey: 'MCowBQYDK2VwAyEA9f518a2...spki-pubkey...',
+  },
+  {
+    blockIndex: 3,
+    blockId: 'ev-seed-3',
+    parcelId: 'BD-DHK-SAV-000001',
+    timestamp: '2026-02-12T10:48:10.000Z',
+    modality: 'FILE',
+    title: 'Geotagged Boundary Peg Inspection Photo Uploaded',
+    summaryBn: 'সরজমিন তদন্ত আলোকচিত্র: আরএস দাগ নং ১১২ সীমানা পিলারের উচ্চ-রেজোলিউশন ছবি',
+    payload: {
+      modality: 'FILE',
+      actor: {
+        name: 'Md. Abdur Rahim (Revenue Amin)',
+        role: 'SURVEYOR_AMIN',
+        nidOrBadge: 'AMIN-DHK-2018/88',
+      },
+      capturedAt: '2026-02-12T10:48:10.000Z',
+      metadata: {
+        fileName: 'SURVEY_SAVAR_DAG112_PEG1_GEO.jpg',
+        mimeType: 'image/jpeg',
+        fileSizeBytes: 4289104,
+        fileSha256: '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
+        exifGps: { lat: 23.851238, lng: 90.261448, altitudeMeters: 14.7 },
+        fileDescription: 'Northern boundary concrete pillar marked with yellow paint, adjacent to canal embankment.',
+      },
+    },
+    payloadHash: '2c4e6d8b0a1c3e5f7a9b1c3d5e7f9a1b3c5d7e9f1a3b4a5e2f9d8a1c3b5e7f9a',
+    previousHash: 'c4e6d8b0a1c3e5f7a9b1c3d5e7f9a1b3c5d7e9f1a3b4a5e2f9d8a1c3b5e7f9a2',
+    currentHash: 'b5e7f9a2c4e6d8b0a1c3e5f7a9b1c3d5e7f9a1b3c5d7e9f1a3b4a5e2f9d8a1c3',
+    signature: 'VEUCIQDf...sha256-exif-sealed-sig...',
+    publicKey: 'MCowBQYDK2VwAyEA9f518a2...spki-pubkey...',
+  },
+  {
+    blockIndex: 4,
+    blockId: 'ev-seed-4',
+    parcelId: 'BD-DHK-SAV-000001',
+    timestamp: '2026-02-12T10:50:00.000Z',
+    modality: 'DEVICE_EVENT',
+    title: 'Survey Handset Hardware Telemetry & Non-Root Attestation',
+    summaryBn: 'মাঠপর্যায়ের মোবাইল ডিভাইসের সিকিউরিটি লগ: মক জিপিএস নিষ্ক্রিয় ও নকশ হার্ডওয়্যার সত্যায়ন',
+    payload: {
+      modality: 'DEVICE_EVENT',
+      actor: {
+        name: 'Md. Abdur Rahim (Revenue Amin)',
+        role: 'SURVEYOR_AMIN',
+        nidOrBadge: 'AMIN-DHK-2018/88',
+      },
+      capturedAt: '2026-02-12T10:50:00.000Z',
+      metadata: {
+        deviceModel: 'Samsung Galaxy XCover 6 Pro (Govt Issued Rugged)',
+        deviceIdHash: '8a3b59dfc12e8471b6910a30b42fce1286940a1b8972',
+        osVersion: 'Android 14 (Security Patch Feb 2026)',
+        appVersion: 'BhumiFieldSurvey-Mobile v2.9.0',
+        batteryLevelPercent: 86,
+        networkType: '4G_LTE',
+        isRootedOrJailbroken: false,
+        deviceEventType: 'MOCK_GPS_PROBE',
+        hardwareSecurityTier: 'HARDWARE_BACKED_TEE',
+      },
+    },
+    payloadHash: 'd8b0a1c3e5f7a9b1c3d5e7f9a1b3c5d7e9f1a3b4a5e2f9d8a1c3b5e7f9a2c4e6',
+    previousHash: 'b5e7f9a2c4e6d8b0a1c3e5f7a9b1c3d5e7f9a1b3c5d7e9f1a3b4a5e2f9d8a1c3',
+    currentHash: 'e7f9a2c4e6d8b0a1c3e5f7a9b1c3d5e7f9a1b3c5d7e9f1a3b4a5e2f9d8a1c3b5',
+    signature: 'TEUCIQCf...tee-hardware-attestation-sig...',
+    publicKey: 'MCowBQYDK2VwAyEA9f518a2...spki-pubkey...',
+  },
+  {
+    blockIndex: 5,
+    blockId: 'ev-seed-5',
+    parcelId: 'BD-DHK-SAV-000001',
+    timestamp: '2026-02-18T11:20:00.000Z',
+    modality: 'FILE',
+    title: 'Sub-Registry Authenticated Registered Sale Deed (Dalil #4821)',
+    summaryBn: 'সাব-রেজিস্ট্রি প্রত্যয়িত সাফ-কবলা দলিল স্ক্যান (দলিল নং ৪৮২১/২০১২)',
+    payload: {
+      modality: 'FILE',
+      actor: {
+        name: 'Sub-Registrar Savar Office Vault',
+        role: 'SUB_REGISTRAR',
+        nidOrBadge: 'SUBREG-SAVAR-VAULT-04',
+      },
+      capturedAt: '2026-02-18T11:20:00.000Z',
+      metadata: {
+        fileName: 'DEED_4821_SAVAR_OFFICIAL_ARCHIVE.pdf',
+        mimeType: 'application/pdf',
+        fileSizeBytes: 8940212,
+        fileSha256: 'bc94a974b7c6c4f03c054ee42045e763b6528751475510427954e3cb41ee3bc0',
+        bayaVolumeNo: 'Book-1, Volume 44, Pages 89-98',
+        subRegistryOffice: 'Savar Sadar Sub-Registry Office',
+      },
+    },
+    payloadHash: 'a1b3c5d7e9f1a3b4a5e2f9d8a1c3b5e7f9a2c4e6d8b0a1c3e5f7a9b1c3d5e7f9',
+    previousHash: 'e7f9a2c4e6d8b0a1c3e5f7a9b1c3d5e7f9a1b3c5d7e9f1a3b4a5e2f9d8a1c3b5',
+    currentHash: '781b359f1a3b4a5e2f9d8a1c3b5e7f9a2c4e6d8b0a1c3e5f7a9b1c3d5e7f9a1b',
+    signature: 'DEUCIQD2...subregistry-official-seal-sig...',
+    publicKey: 'MCowBQYDK2VwAyEA9f518a2...spki-pubkey...',
+  },
+];
+
+let localEvidenceBlocks = [...fallbackEvidenceBlocks];
+
+export async function getEvidenceTimeline(parcelId: string): Promise<{
+  parcelId: string;
+  totalBlocks: number;
+  verification: ChainVerificationReport;
+  blocks: EvidenceBlock[];
+}> {
+  try {
+    return await req<{
+      parcelId: string;
+      totalBlocks: number;
+      verification: ChainVerificationReport;
+      blocks: EvidenceBlock[];
+    }>(`/api/evidence/timeline/${encodeURIComponent(parcelId)}`);
+  } catch {
+    setSource('demo');
+    const mappedBlocks = localEvidenceBlocks.map((b) => ({
+      ...b,
+      parcelId,
+    }));
+    const valid = !mappedBlocks.some((b) => b.isTampered);
+    const tamperedIdx = mappedBlocks.findIndex((b) => b.isTampered);
+    return {
+      parcelId,
+      totalBlocks: mappedBlocks.length,
+      verification: {
+        isValid: valid,
+        parcelId,
+        totalBlocks: mappedBlocks.length,
+        genesisHash: mappedBlocks[0]?.currentHash || '',
+        latestHash: mappedBlocks[mappedBlocks.length - 1]?.currentHash || '',
+        tamperedBlockIndex: tamperedIdx !== -1 ? tamperedIdx : undefined,
+        errorReason: tamperedIdx !== -1 ? mappedBlocks[tamperedIdx].tamperDetails : undefined,
+        verifiedAt: new Date().toISOString(),
+        blockValidations: mappedBlocks.map((b) => ({
+          blockIndex: b.blockIndex,
+          hashValid: !b.isTampered,
+          prevHashValid: !b.isTampered,
+          signatureValid: !b.isTampered,
+          tamperedReason: b.tamperDetails,
+        })),
+      },
+      blocks: mappedBlocks,
+    };
+  }
+}
+
+export async function verifyEvidenceChain(parcelId: string): Promise<ChainVerificationReport> {
+  try {
+    return await req<ChainVerificationReport>(`/api/evidence/verify/${encodeURIComponent(parcelId)}`, {
+      method: 'POST',
+    });
+  } catch {
+    setSource('demo');
+    const timeline = await getEvidenceTimeline(parcelId);
+    return timeline.verification;
+  }
+}
+
+export async function ingestEvidence(payload: {
+  parcelId: string;
+  modality: EvidenceModality;
+  title: string;
+  summaryBn?: string;
+  actor: EvidenceActor;
+  capturedAt?: string;
+  metadata: Record<string, any>;
+}): Promise<{
+  message: string;
+  block: EvidenceBlock;
+  verification: ChainVerificationReport;
+}> {
+  try {
+    return await req<{
+      message: string;
+      block: EvidenceBlock;
+      verification: ChainVerificationReport;
+    }>('/api/evidence/ingest', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    setSource('demo');
+    const blockIndex = localEvidenceBlocks.length;
+    const prev = localEvidenceBlocks[blockIndex - 1];
+    const dummyHash = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
+    const newBlock: EvidenceBlock = {
+      blockIndex,
+      blockId: `ev-local-${Date.now()}`,
+      parcelId: payload.parcelId,
+      timestamp: payload.capturedAt || new Date().toISOString(),
+      modality: payload.modality,
+      title: payload.title,
+      summaryBn: payload.summaryBn || payload.title,
+      payload: {
+        modality: payload.modality,
+        actor: payload.actor,
+        capturedAt: payload.capturedAt || new Date().toISOString(),
+        metadata: payload.metadata || {},
+      },
+      payloadHash: `sha256-payload-${dummyHash}`,
+      previousHash: prev ? prev.currentHash : '0000000000000000000000000000000000000000000000000000000000000000',
+      currentHash: `sha256-block-${dummyHash}`,
+      signature: `ed25519-sig-${dummyHash}`,
+      publicKey: 'MCowBQYDK2VwAyEA9f518a2...spki-pubkey...',
+    };
+    localEvidenceBlocks.push(newBlock);
+    const verification: ChainVerificationReport = {
+      isValid: true,
+      parcelId: payload.parcelId,
+      totalBlocks: localEvidenceBlocks.length,
+      genesisHash: localEvidenceBlocks[0].currentHash,
+      latestHash: newBlock.currentHash,
+      verifiedAt: new Date().toISOString(),
+      blockValidations: localEvidenceBlocks.map((b) => ({
+        blockIndex: b.blockIndex,
+        hashValid: true,
+        prevHashValid: true,
+        signatureValid: true,
+      })),
+    };
+    return {
+      message: 'Evidence successfully ingested and sealed into timeline.',
+      block: newBlock,
+      verification,
+    };
+  }
+}
+
+export async function simulateEvidenceTamper(
+  parcelId: string,
+  targetBlockIndex: number,
+  field: string,
+  maliciousValue: any,
+  reasonBn?: string
+): Promise<{
+  success: boolean;
+  message: string;
+  tamperedBlock: EvidenceBlock;
+  verification: ChainVerificationReport;
+}> {
+  try {
+    return await req<{
+      success: boolean;
+      message: string;
+      tamperedBlock: EvidenceBlock;
+      verification: ChainVerificationReport;
+    }>('/api/evidence/simulate-tamper', {
+      method: 'POST',
+      body: JSON.stringify({ parcelId, targetBlockIndex, field, maliciousValue, reasonBn }),
+    });
+  } catch {
+    setSource('demo');
+    const blk = localEvidenceBlocks[targetBlockIndex];
+    if (blk) {
+      (blk.payload.metadata as any)[field] = maliciousValue;
+      blk.isTampered = true;
+      blk.tamperDetails = `Tampered: ${reasonBn || 'Malicious alteration injected'}`;
+    }
+    const report: ChainVerificationReport = {
+      isValid: false,
+      parcelId,
+      totalBlocks: localEvidenceBlocks.length,
+      genesisHash: localEvidenceBlocks[0].currentHash,
+      latestHash: localEvidenceBlocks[localEvidenceBlocks.length - 1].currentHash,
+      tamperedBlockIndex: targetBlockIndex,
+      errorReason: blk?.tamperDetails || 'Hash chain integrity broken',
+      tamperDetails: blk?.tamperDetails,
+      verifiedAt: new Date().toISOString(),
+      blockValidations: localEvidenceBlocks.map((b, idx) => ({
+        blockIndex: b.blockIndex,
+        hashValid: idx !== targetBlockIndex,
+        prevHashValid: idx < targetBlockIndex,
+        signatureValid: idx !== targetBlockIndex,
+        tamperedReason: b.tamperDetails,
+      })),
+    };
+    return {
+      success: true,
+      message: `Injected tampering into Block #${targetBlockIndex}.`,
+      tamperedBlock: blk,
+      verification: report,
+    };
+  }
+}
+
+export async function resetEvidenceChain(parcelId: string): Promise<{
+  message: string;
+  result: any;
+  verification: ChainVerificationReport;
+}> {
+  try {
+    return await req<{
+      message: string;
+      result: any;
+      verification: ChainVerificationReport;
+    }>('/api/evidence/reset-chain', {
+      method: 'POST',
+      body: JSON.stringify({ parcelId }),
+    });
+  } catch {
+    setSource('demo');
+    localEvidenceBlocks = fallbackEvidenceBlocks.map((b) => ({ ...b, isTampered: false, tamperDetails: undefined }));
+    const verification: ChainVerificationReport = {
+      isValid: true,
+      parcelId,
+      totalBlocks: localEvidenceBlocks.length,
+      genesisHash: localEvidenceBlocks[0].currentHash,
+      latestHash: localEvidenceBlocks[localEvidenceBlocks.length - 1].currentHash,
+      verifiedAt: new Date().toISOString(),
+      blockValidations: localEvidenceBlocks.map((b) => ({
+        blockIndex: b.blockIndex,
+        hashValid: true,
+        prevHashValid: true,
+        signatureValid: true,
+      })),
+    };
+    return {
+      message: 'Evidence chain restored to pristine authentic state.',
+      result: { success: true },
+      verification,
+    };
+  }
+}
+
+export async function exportEvidenceDossier(parcelId: string): Promise<CourtDossier> {
+  try {
+    return await req<CourtDossier>(`/api/evidence/export-dossier/${encodeURIComponent(parcelId)}`);
+  } catch {
+    setSource('demo');
+    const timeline = await getEvidenceTimeline(parcelId);
+    return {
+      dossierId: `DOSSIER-${parcelId}-${Date.now().toString(36).toUpperCase()}`,
+      parcelId,
+      exportedAt: new Date().toISOString(),
+      qrPayload: `BDEVD:v2:${parcelId}:${timeline.totalBlocks}:${timeline.verification.latestHash.substring(0, 16)}:${timeline.verification.isValid ? 'VALID' : 'TAMPERED'}`,
+      verification: timeline.verification,
+      chainLength: timeline.totalBlocks,
+      blocks: timeline.blocks,
+      legalDisclaimerBn: 'ডিজিটাল নিরাপত্তা ও সাক্ষ্য আইন অনুযায়ী এই টাইমলাইন ক্রিপ্টোগ্রাফিক হ্যাশ চেইনে সংরক্ষিত এবং অপরিবর্তনীয়। যেকোনো পরিবর্তন স্বয়ংক্রিয়ভাবে ধরা পড়ে।',
+      legalDisclaimerEn: 'Per the Bangladesh Evidence Act & Digital Security framework, this forensic timeline is anchored on an append-only SHA-256 cryptographic chain with Ed25519 digital signatures. Any record alteration renders the chain invalid.',
+    };
+  }
+}
+
+// ============================================================================
+// AI LANDGUARD MULTI-ENGINE FRAUD VERIFICATION API
+// ============================================================================
+
+export async function getLandGuardAudit(parcelId: string): Promise<LandGuardAuditResult> {
+  try {
+    return await req<LandGuardAuditResult>(`/api/landguard/audit/${encodeURIComponent(parcelId)}`);
+  } catch {
+    setSource('demo');
+    const isEncroached = parcelId === 'BD-DHK-SAV-000003';
+    const isSylhet = parcelId.includes('SYL') || parcelId === 'BD-SYL-SRM-000108';
+
+    const mouza = isSylhet ? 'Sreemangal Mouza' : 'Savar Mouza';
+    const upazila = isSylhet ? 'Sreemangal' : 'Savar';
+    const district = isSylhet ? 'Moulvibazar' : 'Dhaka';
+    const ownerName = isSylhet ? 'Tanvir Ahmed' : 'Mohammad Rafiqul Islam';
+    const khatianNo = isSylhet ? 'BS-5510' : 'RS-4412';
+    const dagNo = isSylhet ? '2041' : '112';
+    const areaDecimal = isSylhet ? 45.0 : 5.5;
+
+    const trustScore = isEncroached ? 33 : (isSylhet ? 96 : 93);
+    const verdict: LandGuardVerdict = isEncroached ? 'CRITICAL_FRAUD_FLAGGED' : 'CLEARED_PROTECTED';
+
+    const pillars: LandGuardPillarEvaluation[] = [
+      {
+        pillarId: 'DEED_FORENSICS',
+        titleEn: 'Dalil Deed & Title Forgery Scan',
+        titleBn: 'দলিল জালিয়াতি ও স্বত্ব বিশ্লেষণ',
+        status: isEncroached ? 'FAIL' : 'PASS',
+        score: isEncroached ? 10 : 95,
+        weightPercent: 30,
+        weightedScore: isEncroached ? 3 : 28,
+        highlightMetric: isEncroached ? 'Deceased Seller NID' : '100% Authentic',
+        summaryEn: isEncroached
+          ? 'High risk: Seller NID flagged as deceased. Civil court injunction active.'
+          : 'Dalil chain unbroken. No area inflation or statutory valuation disparity.',
+        summaryBn: isEncroached
+          ? 'উচ্চ ঝুঁকি: বিক্রেতার এনআইডি মৃত চিহ্নিত। দেওয়ানি আদালতের নিষেধাজ্ঞা বিদ্যমান।'
+          : 'দলিলের ধারাবাহিকতা অটুট। অতিরিক্ত জমির দাবি বা বাজারমূল্য ফাঁকি নেই।',
+        drillDownTarget: 'deed',
+      },
+      {
+        pillarId: 'DRONE_CADASTRE',
+        titleEn: 'Drone Cadastre & Boundary Drift',
+        titleBn: 'ড্রোন ক্যাডাস্ট্রে ও সীমানা পরিবর্তন',
+        status: isEncroached ? 'FAIL' : 'PASS',
+        score: isEncroached ? 20 : 100,
+        weightPercent: 20,
+        weightedScore: isEncroached ? 4 : 20,
+        highlightMetric: isEncroached ? 'Canal Drift 8.6m' : '±0.45m Congruent',
+        summaryEn: isEncroached
+          ? 'Drone survey reveals northern vertex extends 8.6m into government canal.'
+          : 'BDS 2026 drone vector congruent with historic RS 1988 cadastral boundaries.',
+        summaryBn: isEncroached
+          ? 'ড্রোন জরিপে দেখা যায় উত্তর সীমানা সরকারি খালে ৮.৬ মিটার প্রসারিত।'
+          : 'ঐতিহাসিক আরএস নকশার সাথে ড্রোন বিডিএস ২০২৬ এর নিখুঁত সামঞ্জস্য।',
+        drillDownTarget: 'drone',
+      },
+      {
+        pillarId: 'KHAS_PROXIMITY',
+        titleEn: 'Government Khas & Wetland Buffer',
+        titleBn: 'সরকারি খাস ও জলাশয় বাফার যাচাই',
+        status: isEncroached ? 'FAIL' : 'PASS',
+        score: isEncroached ? 15 : 100,
+        weightPercent: 20,
+        weightedScore: isEncroached ? 3 : 20,
+        highlightMetric: isEncroached ? '15m Riverbed Encroachment' : '1,239m Safe Distance',
+        summaryEn: isEncroached
+          ? 'CRITICAL_ENCROACHMENT: Boundary intersects 1 No. Khas Riverbed foreshore.'
+          : 'Clear Title: Property is well outside statutory Khas and wetland buffers.',
+        summaryBn: isEncroached
+          ? 'মারাত্মক দখল: সীমানা ১নং খাস নদী সিকস্তি জমির অন্তর্ভুক্ত।'
+          : 'নিরাপদ স্বত্ব: কোনো সরকারি খাস বা জলাশয় সীমানার নিকটে নয়।',
+        drillDownTarget: 'khas',
+      },
+      {
+        pillarId: 'EVIDENCE_CHAIN',
+        titleEn: 'Cryptographic Chain-of-Custody',
+        titleBn: 'ক্রিপ্টোগ্রাফিক সাক্ষ্য লেজার',
+        status: 'PASS',
+        score: 100,
+        weightPercent: 15,
+        weightedScore: 15,
+        highlightMetric: '7 Blocks Verified',
+        summaryEn: 'SHA-256 hash continuity and Ed25519 digital signatures verified across all blocks.',
+        summaryBn: 'সকল ব্লকে অপরিবর্তনীয় SHA-256 হ্যাশ চেইন ও ডিজিটাল স্বাক্ষর সুরক্ষিত।',
+        drillDownTarget: 'evidence',
+      },
+      {
+        pillarId: 'LAND_LOCK',
+        titleEn: 'Biometric Anti-Fraud Land Lock',
+        titleBn: 'বায়োমেট্রিক জমি সুরক্ষা লক',
+        status: isEncroached ? 'WARNING' : 'PASS',
+        score: isEncroached ? 70 : 100,
+        weightPercent: 15,
+        weightedScore: isEncroached ? 10 : 15,
+        highlightMetric: isEncroached ? 'UNLOCKED' : 'ACTIVE / FROZEN',
+        summaryEn: isEncroached
+          ? 'Property Lock is inactive. Unauthorized conveyance deeds could be attempted.'
+          : 'Biometric Property Lock active. Registry transfers and mutations frozen.',
+        summaryBn: isEncroached
+          ? 'জমি লক নিষ্ক্রিয়। বায়োমেট্রিক সুরক্ষা সক্রিয় করার সুপারিশ করা হচ্ছে।'
+          : 'বায়োমেট্রিক জমি লক সক্রিয়। সাব-রেজিস্ট্রি এবং নামজারি মিউটেশন স্থগিত।',
+        drillDownTarget: 'lock',
+      },
+    ];
+
+    const auditedAt = new Date().toISOString();
+    return {
+      parcelId,
+      mouza,
+      upazila,
+      district,
+      ownerName,
+      khatianNo,
+      dagNo,
+      areaDecimal,
+      trustScore,
+      verdict,
+      verdictTitleEn: isEncroached ? 'Critical Fraud & Legal Risk Detected' : 'Cleared & Protected Title',
+      verdictTitleBn: isEncroached ? 'মারাত্মক জালিয়াতি বা আইনি জটিলতা শনাক্ত' : 'স্বত্ব সম্পূর্ণ সুরক্ষিত ও ত্রুটিমুক্ত',
+      aiExplanationEn: isEncroached
+        ? 'CRITICAL ALERT: AI LandGuard has detected active stay order and drone cadastral canal encroachment. Conveyance deeds must be halted.'
+        : 'AI LandGuard has verified all 5 security dimensions. The deed lineage is authentic, drone vectors match RS 1988 boundaries within 0.45m, and tamper-evident ledger is cryptographically sealed.',
+      aiExplanationBn: isEncroached
+        ? 'জরুরি সতর্কবার্তা: এআই ল্যান্ডগার্ড আদালতের নিষেধাজ্ঞা এবং সরকারি খালে সীমানা বিকৃতি শনাক্ত করেছে। দলিল রেজিস্ট্রি স্থগিত রাখা বাধ্যতামূলক।'
+        : 'এআই ল্যান্ডগার্ড ৫টি স্তরেই জমিটিকে যাচাই করেছে। দলিলের শুদ্ধতা, ড্রোনের নিখুঁত নকশা এবং ক্রিপ্টোগ্রাফিক সাক্ষ্য সুরক্ষিত রয়েছে। জমিটি সম্পূর্ণ নিরাপদ।',
+      isLocked: !isEncroached,
+      pillars,
+      auditedAt,
+      qrPayload: `AILG:v2:${parcelId}:${trustScore}:${verdict}:${auditedAt.substring(0, 10)}`,
+    };
+  }
+}
+
+export async function toggleLandGuardLock(
+  parcelId: string,
+  nidNumber?: string,
+  biometricToken?: string
+): Promise<{ parcelId: string; isLocked: boolean; blockAppended: boolean }> {
+  try {
+    return await req<{ parcelId: string; isLocked: boolean; blockAppended: boolean }>('/api/landguard/toggle-lock', {
+      method: 'POST',
+      body: JSON.stringify({ parcelId, nidNumber, biometricToken }),
+    });
+  } catch {
+    setSource('demo');
+    const isLocked = toggleDemoParcelLock(parcelId, biometricToken || '1234');
+    return {
+      parcelId,
+      isLocked,
+      blockAppended: true,
+    };
+  }
+}
+
+export async function exportLandGuardDossier(parcelId: string): Promise<LandGuardDossier> {
+  try {
+    return await req<LandGuardDossier>(`/api/landguard/dossier/${encodeURIComponent(parcelId)}`);
+  } catch {
+    setSource('demo');
+    const audit = await getLandGuardAudit(parcelId);
+    const dossierId = `LG-DOSSIER-${parcelId}-${Date.now().toString(36).toUpperCase()}`;
+    return {
+      dossierId,
+      parcelId,
+      audit,
+      exportedAt: new Date().toISOString(),
+      qrPayload: `AILG-CERT:${dossierId}:${parcelId}:${audit.trustScore}:${audit.verdict}`,
+      issuerAuthority: 'Ministry of Land AI LandGuard National Verification Cell, Government of Bangladesh',
+      legalDisclaimerBn: 'ভূমি মন্ত্রণালয়ের এআই ল্যান্ডগার্ড স্মার্ট যাচাইকরণ প্রতিবেদন। দ্য রেজিস্ট্রেশন অ্যাক্ট ১৯০৮ (ধারা ৫২এ) এবং ডিজিটাল সাক্ষ্য আইন অনুযায়ী সত্যায়িত।',
+      legalDisclaimerEn: 'Authoritative AI LandGuard Property Verification Dossier. Certified under Registration Act 1908 (Sec 52A) and Bangladesh Digital Evidence framework.',
+    };
+  }
+}
+
+/* =============================================================
+ * INTER-REGISTRY LOCK & TITLE ENCUMBRANCE API CLIENT
+ * ============================================================= */
+
+export async function getInterAgencyDashboard(parcelId: string): Promise<InterAgencyDashboardState> {
+  try {
+    return await req<InterAgencyDashboardState>(`/api/registry-locks/${encodeURIComponent(parcelId)}`);
+  } catch {
+    setSource('demo');
+    const isDisputed = parcelId.includes('000003');
+    const isSylhet = parcelId.toUpperCase().includes('SYL');
+    const hasMortgage = parcelId.includes('000002');
+    const hasEscrow = parcelId.includes('000001');
+
+    return {
+      parcelId,
+      isFullyClear: !isDisputed && !hasMortgage && !hasEscrow,
+      overallStatusEn: isDisputed
+        ? 'DISPUTED_STAY_LOCKED'
+        : hasEscrow
+        ? 'ESCROW_FROZEN'
+        : hasMortgage
+        ? 'BANK_MORTGAGED'
+        : 'CLEAN_UNENCUMBERED',
+      overallStatusBn: isDisputed
+        ? 'আদালতের স্থগিতাদেশযুক্ত / বিতর্কিত জমি (Judicial Stay Locked)'
+        : hasEscrow
+        ? 'বায়না চুক্তি ও এসক্রো প্রক্রিয়াধীন (Escrow Transfer Frozen)'
+        : hasMortgage
+        ? 'ব্যাংক চার্জ ও বন্ধকযুক্ত (Bank Mortgage Encumbered)'
+        : 'সম্পূর্ণ দায়মুক্ত ও লেনদেন নিরাপদ (Clean & Unencumbered)',
+      activeLockCount: isDisputed ? 1 : hasMortgage ? 1 : hasEscrow ? 1 : 0,
+      locks: isDisputed
+        ? [
+            {
+              id: 'lck-001',
+              lockToken: 'LCK-2025-CRT-14209',
+              parcelId,
+              lockType: 'JUDICIAL_STAY',
+              status: 'ACTIVE',
+              priority: 1,
+              lockingAuthority: 'Senior Assistant Judge Court, Savar, Dhaka',
+              authorityCategory: 'JUDICIARY',
+              initiatorName: 'Alhaj Mokhlesur Rahman (Claimant in TS-142/2025)',
+              referenceNumber: 'TS-142/2025',
+              statutoryBasis: 'CPC 1908 (Order 39 Rules 1-2) & Section 52 Transfer of Property Act',
+              orderSummaryEn: 'Temporary injunction restraining alienation, conveyance, or mutation of Dag #482.',
+              orderSummaryBn: 'মামলার চূড়ান্ত নিষ্পত্তি না হওয়া পর্যন্ত হস্তান্তর ও নামজারি সম্পূর্ণ নিষিদ্ধ।',
+              acquiredAt: '2025-02-01T10:00:00.000Z',
+              ed25519Signature: 'sig_court_ed25519_verified_003',
+              auditHash: '0x88fbc92193e8a4d019f2a994',
+            },
+          ]
+        : hasMortgage
+        ? [
+            {
+              id: 'lck-002',
+              lockToken: 'LCK-2024-BNK-88120',
+              parcelId,
+              lockType: 'MORTGAGE_LIEN',
+              status: 'ACTIVE',
+              priority: 4,
+              lockingAuthority: 'Sonali Bank PLC (Savar Cantonment Branch)',
+              authorityCategory: 'BANKING',
+              initiatorName: 'Mohammad Rafiqul Islam (Borrower)',
+              referenceNumber: 'LN-2024-SONALI-4812 / CIB-BB-2026-904812',
+              statutoryBasis: 'Transfer of Property Act 1882 Sec 58 & BB BRPD Circular 2018',
+              orderSummaryEn: '1st charge equitable mortgage securing institutional loan of BDT 2,500,000.',
+              orderSummaryBn: 'সোনালী ব্যাংক পিএলসি এর অনুকূলে ২৫,০০,০০০ টাকার ১ম চার্জ বন্ধকি দায়।',
+              acquiredAt: '2024-03-12T10:00:00.000Z',
+              ed25519Signature: 'sig_bank_ed25519_verified_002',
+              auditHash: '0x1928374a9bc81726f5e4d3c2',
+            },
+          ]
+        : hasEscrow
+        ? [
+            {
+              id: 'lck-003',
+              lockToken: 'LCK-2026-ESC-08141',
+              parcelId,
+              lockType: 'ESCROW_CONVEYANCE',
+              status: 'ACTIVE',
+              priority: 3,
+              lockingAuthority: 'Smart LandLock Escrow Engine (ESC-2026-0814)',
+              authorityCategory: 'LAND_MINISTRY',
+              initiatorName: 'Tanvir Ahmed (Contracted Buyer)',
+              referenceNumber: 'ESC-2026-0814',
+              statutoryBasis: 'Zero-Trust Land Conveyance Protocol & Registration Act 1908',
+              orderSummaryEn: 'In-flight purchase escrow. Transfer frozen against secondary sale.',
+              orderSummaryBn: 'দ্বৈত বিক্রয় রোধে এই দাগের অন্য কোনো দলিল রেজিস্ট্রি সাময়িক স্থগিত।',
+              acquiredAt: '2026-09-18T09:15:00.000Z',
+              ed25519Signature: 'sig_escrow_ed25519_verified_001',
+              auditHash: '0xabcde12345ff990088776655',
+            },
+          ]
+        : [],
+      agencyStatuses: {
+        landMinistry: {
+          status: isDisputed ? 'HEARING_FROZEN' : 'UNRESTRICTED',
+          canMutate: !isDisputed,
+          activeKhatian: isSylhet ? 'BS-5510' : 'RS-4412',
+          summaryEn: isDisputed
+            ? 'e-Mutation hearings suspended by AC (Land) following Civil Court stay notice.'
+            : 'Pre-requisites satisfied for instant digital e-Mutation upon deed registration.',
+          summaryBn: isDisputed
+            ? 'আদালতের নিষেধাজ্ঞার কারণে সহকারী কমিশনার (ভূমি) এজলাসে নামজারি শুনানি স্থগিত।'
+            : 'দলিল রেজিস্ট্রি সাপেক্ষে তাৎক্ষণিক ই-নামজারি নিষ্পত্তির জন্য প্রস্তুত।',
+        },
+        lawMinistry: {
+          status: isDisputed ? 'REGISTRATION_BARRED' : hasMortgage ? 'CONDITIONAL_NOC' : 'UNRESTRICTED',
+          canConvey: !isDisputed && !hasMortgage && !hasEscrow,
+          subRegistryOffice: isSylhet ? 'Sreemangal Sub-Registry Office' : 'Savar Sub-Registry Office',
+          summaryEn: isDisputed
+            ? 'Deed registration barred under Section 52A Registration Act 1908 & CPC Order 39.'
+            : hasMortgage
+            ? 'Conditional: Requires Bank No Objection Certificate (NOC) before deed execution.'
+            : hasEscrow
+            ? 'Parallel deed registration locked out under active purchase escrow agreement.'
+            : 'Deed registration eligible with zero caveats in Sub-Registry Book 1 archives.',
+          summaryBn: isDisputed
+            ? 'সাব-রেজিস্ট্রি অফিসে সাফ-কবলা দলিল সম্পাদন আইনত নিষিদ্ধ।'
+            : hasMortgage
+            ? 'ব্যাংকের অনাপত্তিপত্র (NOC) দাখিল সাপেক্ষে দলিল রেজিস্ট্রি সম্ভব।'
+            : 'দলিল সম্পাদনের জন্য সম্পূর্ণ প্রস্তুত ও নির্বিঘ্ন।',
+        },
+        judiciary: {
+          status: isDisputed ? 'INJUNCTION_ACTIVE' : 'CLEAN',
+          hasInjunction: isDisputed,
+          courtName: isDisputed ? 'Senior Assistant Judge Court, Savar, Dhaka' : undefined,
+          caseNumber: isDisputed ? 'TS-142/2025' : undefined,
+          summaryEn: isDisputed
+            ? 'Temporary Injunction active in Suit TS-142/2025. Restrains alienation of land.'
+            : 'Zero civil injunctions, stay orders, or pending lis pendens caveats on court dockets.',
+          summaryBn: isDisputed
+            ? 'মামলা নং TS-142/2025 এ সিনিয়র সহকারী জজ আদালত কর্তৃক অস্থায়ী নিষেধাজ্ঞা বলবৎ।'
+            : 'দেওয়ানি আদালতে কোনো মামলা বা স্থগিতাদেশ নেই।',
+        },
+        centralBankCib: {
+          status: hasMortgage ? 'FIRST_CHARGE_ACTIVE' : 'NO_LIEN',
+          hasActiveMortgage: hasMortgage,
+          primaryBank: hasMortgage ? 'Sonali Bank PLC' : undefined,
+          sanctionedBdt: hasMortgage ? 2500000 : 0,
+          summaryEn: hasMortgage
+            ? 'Registered 1st charge in CIB II by Sonali Bank PLC (BDT 2,500,000).'
+            : 'Zero active mortgages or institutional charges in Bangladesh Bank CIB II.',
+          summaryBn: hasMortgage
+            ? 'সোনালী ব্যাংক পিএলসি এ ২৫,০০,০০০ টাকার বন্ধকি চার্জ সিআইবিতে অন্তর্ভুক্ত রয়েছে।'
+            : 'বাংলাদেশ ব্যাংক সিআইবি ডাটাবেজে কোনো বন্ধক বা আর্থিক দায় নেই।',
+        },
+      },
+      lastSyncedAt: new Date().toISOString(),
+    };
+  }
+}
+
+export async function inquireCibMortgages(parcelId: string): Promise<CibInquiryResult> {
+  try {
+    return await req<CibInquiryResult>(`/api/registry-locks/${encodeURIComponent(parcelId)}/mortgages`);
+  } catch {
+    setSource('demo');
+    const hasMortgage = parcelId.includes('000002');
+    return {
+      parcelId,
+      hasActiveMortgage: hasMortgage,
+      totalMortgageCount: hasMortgage ? 1 : 0,
+      totalSanctionedAmountBDT: hasMortgage ? 2500000 : 0,
+      primaryChargeHolder: hasMortgage ? 'Sonali Bank PLC' : undefined,
+      liens: hasMortgage
+        ? [
+            {
+              cibTrackingToken: 'CIB-BB-2026-904812',
+              parcelId,
+              bankCode: 'SONALI',
+              bankName: 'Sonali Bank PLC',
+              branchName: 'Savar Cantonment Branch',
+              routingNumber: '200260481',
+              sanctionedAmountBDT: 2500000,
+              outstandingBalanceBDT: 1850000,
+              chargeRank: 1,
+              isPariPassuConsent: false,
+              status: 'ACTIVE_LIEN',
+              sanctionDate: '2024-03-12T10:00:00.000Z',
+              mortgageDeedNumber: 'DALIL-MTG-8812/2024',
+              borrowerNid: '19852691234567890',
+              borrowerName: 'Mohammad Rafiqul Islam',
+            },
+          ]
+        : [],
+      cibScore: hasMortgage ? 685 : 820,
+      canPledgeNewMortgage: !hasMortgage,
+      rejectionReason: hasMortgage
+        ? 'DOUBLE_MORTGAGE_COLLISION: Active 1st Charge held by Sonali Bank PLC. Secondary charge prohibited without Pari-Passu consortium consent.'
+        : undefined,
+      inquiryTimestamp: new Date().toISOString(),
+      inquiryReference: `CIB-INQ-${Date.now().toString().slice(-8)}`,
+    };
+  }
+}
+
+export async function registerCibMortgage(parcelId: string, data: any): Promise<any> {
+  return await req<any>(`/api/registry-locks/${encodeURIComponent(parcelId)}/mortgages`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function issueBankNoc(token: string): Promise<{ success: boolean; nocNumber?: string }> {
+  try {
+    return await req<{ success: boolean; nocNumber?: string }>(`/api/registry-locks/mortgages/${encodeURIComponent(token)}/noc`, {
+      method: 'POST',
+      body: JSON.stringify({ officerNid: '19852691234567890' }),
+    });
+  } catch {
+    setSource('demo');
+    return { success: true, nocNumber: `NOC-SONALI-2026-${Math.floor(10000 + Math.random() * 90000)}` };
+  }
+}
+
+export async function dischargeCibMortgage(token: string, satisfactionDeedNo?: string): Promise<{ success: boolean }> {
+  try {
+    return await req<{ success: boolean }>(`/api/registry-locks/mortgages/${encodeURIComponent(token)}/satisfy`, {
+      method: 'POST',
+      body: JSON.stringify({ satisfactionDeedNo }),
+    });
+  } catch {
+    setSource('demo');
+    return { success: true };
+  }
+}
+
+export async function getNonEncumbranceCertificate(
+  parcelId: string,
+  params?: { applicantName?: string; applicantNid?: string; purpose?: string }
+): Promise<NonEncumbranceCertificate> {
+  const query = new URLSearchParams();
+  if (params?.applicantName) query.set('applicantName', params.applicantName);
+  if (params?.applicantNid) query.set('applicantNid', params.applicantNid);
+  if (params?.purpose) query.set('purpose', params.purpose);
+
+  const qs = query.toString() ? `?${query.toString()}` : '';
+  try {
+    return await req<NonEncumbranceCertificate>(`/api/registry-locks/${encodeURIComponent(parcelId)}/nec${qs}`);
+  } catch {
+    setSource('demo');
+    const isDisputed = parcelId.includes('000003');
+    const hasMortgage = parcelId.includes('000002');
+    const isSylhet = parcelId.toUpperCase().includes('SYL');
+
+    const certNo = `NEC-2026-${Math.floor(100000 + Math.random() * 900000)}`;
+    const now = new Date().toISOString();
+
+    return {
+      certificateNumber: certNo,
+      parcelId,
+      mouza: isSylhet ? 'Radhanagar Mouza' : 'Savar Mouza',
+      upazila: isSylhet ? 'Sreemangal' : 'Savar',
+      district: isSylhet ? 'Moulvibazar' : 'Dhaka',
+      khatianNo: isSylhet ? 'BS-5510' : 'RS-4412',
+      dagNo: isSylhet ? '2041' : '112',
+      areaDecimal: isSylhet ? 45.0 : 5.5,
+      currentOwnerName: isSylhet ? 'Tanvir Ahmed' : 'Kamal Hossain',
+      currentOwnerNid: isSylhet ? '19882691002233441' : '19852692011000123',
+      applicantName: params?.applicantName || 'Tanvir Ahmed',
+      applicantNid: params?.applicantNid || '19882691234567891',
+      purpose: params?.purpose || 'Bank Loan Underwriting / Property Conveyance Due Diligence',
+      isFullyUnencumbered: !isDisputed && !hasMortgage,
+      encumbranceStatusEn: isDisputed
+        ? 'STRICTLY_ENCUMBERED'
+        : hasMortgage
+        ? 'CONDITIONAL_CAUTION'
+        : 'CLEAN_UNENCUMBERED',
+      encumbranceStatusBn: isDisputed
+        ? 'আদালতের স্থগিতাদেশযুক্ত (হস্তান্তর নিষিদ্ধ)'
+        : hasMortgage
+        ? 'শর্তসাপেক্ষ দায়যুক্ত (ব্যাংক চার্জ বিদ্যমান)'
+        : 'নির্দায় ও দায়মুক্ত (সম্পূর্ণ পরিষ্কার স্বত্ব)',
+      registryClearances: {
+        cibBankMortgages: {
+          status: hasMortgage ? 'FAIL' : 'PASS',
+          findingEn: hasMortgage
+            ? 'Active 1st charge equitable mortgage in CIB II (BDT 2,500,000).'
+            : 'Zero active registered mortgages in Bangladesh Bank CIB II.',
+          findingBn: hasMortgage ? 'সোনালী ব্যাংকে বন্ধকি দায় বিদ্যমান।' : 'কোনো ব্যাংক বন্ধক বা আর্থিক দায় নেই।',
+          activeLienCount: hasMortgage ? 1 : 0,
+          totalLienBdt: hasMortgage ? 2500000 : 0,
+        },
+        judicialCourts: {
+          status: isDisputed ? 'FAIL' : 'PASS',
+          findingEn: isDisputed
+            ? 'Active Civil Court injunction under CPC Order 39 (TS-142/2025).'
+            : 'Zero active stay orders or injunctions in District & Assistant Judge Courts.',
+          findingBn: isDisputed ? 'আদালতের স্থগিতাদেশ বলবৎ রয়েছে।' : 'কোনো মামলা বা নিষেধাজ্ঞা নেই।',
+          activeInjunctionCount: isDisputed ? 1 : 0,
+        },
+        subRegistryArchives: {
+          status: 'PASS',
+          findingEn: 'Continuous 30-year unbroken chain of title verified in Sub-Registry Book 1.',
+          findingBn: 'সাব-রেজিস্ট্রি বালাম বই ১ এ ৩০ বছরের ধারাবাহিকতা প্রত্যয়িত।',
+          historicalDeedCount: 3,
+        },
+        governmentKhasCanal: {
+          status: 'PASS',
+          findingEn: 'Safe private title. Distance to nearest public canal/wetland is 142m.',
+          findingBn: 'নিরাপদ ব্যক্তিমালিকানাধীন জমি। নিকটস্থ সরকারি খাস জলাশয় হতে দূরত্ব ১৪২ মিটার।',
+          khasRiskLevel: 'CLEAN',
+        },
+      },
+      thirtyYearAuditChain: [
+        {
+          periodYears: '1920 - 1956',
+          surveyEpoch: 'CS (1920)',
+          deedOrKhatianRef: 'CS Khatian #104',
+          grantor: 'Cadastral Survey Registry',
+          grantee: 'Late Alimuddin Sarkar',
+          transferType: 'Cadastral Allotment',
+          status: 'CLEAR_VALID',
+        },
+        {
+          periodYears: '1956 - 1978',
+          surveyEpoch: 'SA (1956)',
+          deedOrKhatianRef: 'SA Khatian #218',
+          grantor: 'State Acquisition Settlement',
+          grantee: 'Azharuddin Sarkar',
+          transferType: 'Hereditary Succession (Faraiz)',
+          status: 'CLEAR_VALID',
+        },
+        {
+          periodYears: '1978 - 2015',
+          surveyEpoch: 'RS (1978)',
+          deedOrKhatianRef: 'RS Khatian #482',
+          grantor: 'Azharuddin Sarkar',
+          grantee: 'Abdul Karim Mia',
+          transferType: 'Baya Dalil #1982-SAV-3109',
+          status: 'CLEAR_VALID',
+        },
+        {
+          periodYears: '2015 - 2026',
+          surveyEpoch: 'BS (2015)',
+          deedOrKhatianRef: 'DALIL-2018-SAV-4821',
+          grantor: 'Abdul Karim Mia',
+          grantee: 'Kamal Hossain',
+          transferType: 'Registered Conveyance Deed (Kabala)',
+          status: isDisputed ? 'DISPUTED' : hasMortgage ? 'ENCUMBERED' : 'CLEAR_VALID',
+        },
+      ],
+      issuedAt: now,
+      expiresAt: new Date(Date.now() + 90 * 24 * 3600 * 1000).toISOString(),
+      issuingAuthorityEn: 'Office of the Assistant Commissioner (Land) & Sub-Registry Joint Clearance Cell',
+      issuingAuthorityBn: 'সহকারী কমিশনার (ভূমি) ও সাব-রেজিস্ট্রার যৌথ স্বত্ব ও দায়মুক্তি সেল',
+      statutoryDisclaimerEn:
+        'Certified under Section 57 Registration Act 1908 and Section 143 SAT Act 1950 via synchronized multi-agency registry audit.',
+      statutoryDisclaimerBn:
+        'রেজিস্ট্রেশন আইন ১৯০৮ এর ৫৭ ধারা ও প্রজাস্বত্ব আইন ১৯৫০ এর ১৪৩ ধারা অনুযায়ী চারটি সরকারি ডাটাবেজের সমন্বয়ে প্রদত্ত।',
+      ed25519Signature: 'sig_ed25519_verified_nec_clearance_hash_2026',
+      verificationHash: `0x${certNo.slice(-6)}${Date.now().toString(16)}`,
+      publicKeyBase64: 'MCowBQYDK2VwAyEANkP...',
+      qrPayload: `BDSIG:v1:${certNo}:HASH9901:${Date.now()}`,
+    };
+  }
+}
+
+export async function simulateCrossAgencyEvent(
+  parcelId: string,
+  scenario: string,
+  extraParams?: any
+): Promise<any> {
+  try {
+    return await req<any>(`/api/registry-locks/${encodeURIComponent(parcelId)}/simulate`, {
+      method: 'POST',
+      body: JSON.stringify({ scenario, extraParams }),
+    });
+  } catch {
+    setSource('demo');
+    if (scenario === 'DOUBLE_SALE_ATTEMPT') {
+      return {
+        success: true,
+        event: 'DOUBLE_SALE_INTERCEPTED',
+        messageEn: 'FRAUD PREVENTED: Sub-Registry locked out second buyer deed registration! Parcel is locked under active purchase escrow (ESC-2026-0814). Parallel conveyance prohibited.',
+        messageBn: 'জালিয়াতি প্রতিহত: সাব-রেজিস্ট্রারে দ্বিতীয় ক্রেতার সাফ-কবলা দলিল রেজিস্ট্রি স্বয়ংক্রিয়ভাবে আটকে দেওয়া হয়েছে! জমিটি সক্রিয় বায়না চুক্তির অধীনে লক রয়েছে।',
+        outcome: { blocked: true, statuteRef: 'Registration Act 1908 Sec 52A & Penal Code Sec 420' },
+      };
+    } else if (scenario === 'DOUBLE_MORTGAGE_ATTEMPT') {
+      return {
+        success: true,
+        event: 'DOUBLE_MORTGAGE_BLOCKED',
+        messageEn: 'CIB COLLISION PREVENTED: Secondary bank loan rejected! Parcel is already encumbered by Sonali Bank PLC (1st Charge BDT 2,500,000). Multiple 1st charges prohibited.',
+        messageBn: 'দ্বৈত বন্ধক প্রতিহত: বাংলাদেশ ব্যাংক সিআইবি ডাটাবেজে দ্বিতীয় ব্যাংকের বন্ধক চেষ্টা আটকে দেওয়া হয়েছে! সোনালী ব্যাংকের ১ম চার্জ বন্ধক বিদ্যমান।',
+        outcome: { blocked: true, statuteRef: 'Transfer of Property Act 1882 Sec 58' },
+      };
+    } else if (scenario === 'COURT_INJUNCTION_ISSUED') {
+      return {
+        success: true,
+        event: 'JUDICIAL_STAY_APPLIED',
+        messageEn: 'Civil court injunction issued (TS-142/2026). All 4 registries locked instantly under CPC Order 39!',
+        messageBn: 'আদালতের নিষেধাজ্ঞা জারি (TS-142/2026)। এসিল্যান্ড ও সাব-রেজিস্ট্রিতে জমি তাৎক্ষণিক লক!',
+        outcome: { caseNumber: 'TS-142/2026' },
+      };
+    } else if (scenario === 'COURT_INJUNCTION_VACATED') {
+      return {
+        success: true,
+        event: 'JUDICIAL_STAY_VACATED',
+        messageEn: 'Civil court injunction vacated. Title unlocked across all agencies.',
+        messageBn: 'আদালতের নিষেধাজ্ঞা প্রত্যাহার সম্পন্ন। জমি পুনরায় লেনদেনের জন্য উন্মুক্ত।',
+        outcome: { isLocked: false },
+      };
+    } else if (scenario === 'BANK_NOC_ISSUED') {
+      return {
+        success: true,
+        event: 'BANK_NOC_ISSUED',
+        messageEn: 'Bank No Objection Certificate (NOC-SONALI-2026-90412) registered. Conditional conveyance permitted.',
+        messageBn: 'ব্যাংকের অনাপত্তিপত্র (NOC-SONALI-2026-90412) নিবন্ধিত। শর্তসাপেক্ষ জমি হস্তান্তর অনুমোদিত।',
+        outcome: { nocNumber: 'NOC-SONALI-2026-90412' },
+      };
+    } else {
+      return {
+        success: true,
+        event: 'OWNER_LOCK_TOGGLED',
+        messageEn: 'Citizen property lock status toggled successfully.',
+        messageBn: 'মালিকানা বায়োমেট্রিক লক সফলভাবে আপডেট করা হয়েছে।',
+        outcome: { toggled: true },
+      };
+    }
+  }
+}
 
