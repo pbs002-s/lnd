@@ -14,6 +14,12 @@ import { EscrowService } from '../services/escrowService';
 import { KhasService } from '../services/khasService';
 import { SurveyService } from '../services/surveyService';
 import { DroneCadastreService } from '../services/droneCadastreService';
+import { DigitalEvidenceService } from '../services/digitalEvidenceService';
+import { LandGuardService } from '../services/landGuardService';
+import { InterRegistryLockEngine } from '../services/interRegistryLockEngine';
+import { CibGateway } from '../services/gateways/cibGateway';
+import { JudicialGateway } from '../services/gateways/judicialGateway';
+import { NecService } from '../services/necService';
 
 function runTestSuite() {
   console.log('[TEST RUNNER] Starting Phase 1 test suite...');
@@ -538,6 +544,211 @@ function runTestSuite() {
     assert.strictEqual(comparison.verdict, 'SUSPECTED_CANAL_ENCROACHMENT');
     assert.ok(comparison.maxVertexShiftMeters > 5.0, 'Must detect substantial vertex expansion into canal');
     assert.ok(comparison.canalEncroachmentAreaSqFt && comparison.canalEncroachmentAreaSqFt > 0);
+  });
+
+  // --- 10. Phase 5: Digital Evidence & Tamper-Evident Timeline Ledger ---
+  test('DigitalEvidenceService: Default parcel has seeded multi-modal evidence chain', () => {
+    const chain = DigitalEvidenceService.getEvidenceTimeline('BD-DHK-SAV-000001');
+    assert.ok(chain.length >= 6, 'Seed chain must contain at least 6 blocks');
+    
+    // Verify all 4 modalities are represented
+    const modalities = new Set(chain.map((b) => b.modality));
+    assert.ok(modalities.has('MESSAGE'), 'Must include MESSAGE modality');
+    assert.ok(modalities.has('FILE'), 'Must include FILE modality');
+    assert.ok(modalities.has('LOCATION'), 'Must include LOCATION modality');
+    assert.ok(modalities.has('DEVICE_EVENT'), 'Must include DEVICE_EVENT modality');
+  });
+
+  test('DigitalEvidenceService: Pristine chain passes cryptographic audit & Ed25519 signatures', () => {
+    const report = DigitalEvidenceService.verifyChainIntegrity('BD-DHK-SAV-000001');
+    assert.strictEqual(report.isValid, true, 'Pristine chain must be 100% valid');
+    assert.strictEqual(report.totalBlocks, 7);
+    assert.strictEqual(report.tamperedBlockIndex, undefined);
+    assert.ok(report.genesisHash.length === 64);
+    assert.ok(report.latestHash.length === 64);
+    assert.strictEqual(report.blockValidations.every((b) => b.hashValid && b.prevHashValid && b.signatureValid), true);
+  });
+
+  test('DigitalEvidenceService: Ingests new multi-modal evidence and appends verified block', () => {
+    const newBlock = DigitalEvidenceService.ingestEvidence({
+      parcelId: 'BD-DHK-SAV-000001',
+      modality: 'MESSAGE',
+      title: 'AC Land Final Mutation Order Promulgated',
+      summaryBn: 'নামজারি অনুমোদনের চূড়ান্ত আদেশ নামজারি ডকেটে সন্নিবেশিত',
+      actor: {
+        name: 'Khandakar Mizanur Rahman, BCS (Admin)',
+        role: 'AC_LAND',
+        nidOrBadge: 'BCS-36-88912',
+      },
+      metadata: {
+        orderId: 'ORDER-SAV-2026-991',
+        khatianNoAssigned: 'RS-4412/1',
+        deliveryStatus: 'DELIVERED',
+      },
+    });
+
+    assert.ok(newBlock.blockIndex >= 7);
+    assert.ok(newBlock.currentHash.length === 64);
+    assert.ok(newBlock.signature.length > 30);
+    assert.strictEqual(newBlock.modality, 'MESSAGE');
+
+    const report = DigitalEvidenceService.verifyChainIntegrity('BD-DHK-SAV-000001');
+    assert.strictEqual(report.isValid, true, 'Chain must remain valid after new block ingestion');
+  });
+
+  test('DigitalEvidenceService: Instantly flags retroactive tampering and pinpoints altered block', () => {
+    // Maliciously alter latitude coordinate in block #2
+    const tamperResult = DigitalEvidenceService.simulateTamper('BD-DHK-SAV-000001', 2, {
+      field: 'latitude',
+      maliciousValue: 24.999999, // Fake coordinate
+      reasonBn: 'জালিয়াতি করে জিপিএস অক্ষাংশ স্থানান্তর করা হয়েছে',
+    });
+
+    assert.strictEqual(tamperResult.success, true);
+    
+    // Audit must now fail and identify block #2
+    const report = DigitalEvidenceService.verifyChainIntegrity('BD-DHK-SAV-000001');
+    assert.strictEqual(report.isValid, false, 'Tampered chain must be invalid');
+    assert.strictEqual(report.tamperedBlockIndex, 2, 'Tampered block index must be 2');
+    assert.ok(report.errorReason && report.errorReason.includes('Block #2'));
+  });
+
+  test('DigitalEvidenceService: Reverts cleanly back to pristine authentic ledger', () => {
+    const resetResult = DigitalEvidenceService.resetChain('BD-DHK-SAV-000001');
+    assert.strictEqual(resetResult.success, true);
+
+    const report = DigitalEvidenceService.verifyChainIntegrity('BD-DHK-SAV-000001');
+    assert.strictEqual(report.isValid, true, 'Restored chain must be 100% valid again');
+  });
+
+  test('DigitalEvidenceService: Exports court-admissible evidence dossier with QR payload', () => {
+    const dossier = DigitalEvidenceService.exportCourtDossier('BD-DHK-SAV-000001');
+    assert.ok(dossier.dossierId.startsWith('DOSSIER-BD-DHK-SAV-000001'));
+    assert.ok(dossier.qrPayload.startsWith('BDEVD:v2:BD-DHK-SAV-000001:'));
+    assert.strictEqual(dossier.verification.isValid, true);
+    assert.ok(dossier.blocks.length >= 6);
+  });
+
+  // --- 11. AI LandGuard Multi-Engine Verification Tests ---
+  test('LandGuardService: Evaluates BD-DHK-SAV-000001 with high trust score and CLEARED_PROTECTED verdict', () => {
+    const audit = LandGuardService.auditParcel('BD-DHK-SAV-000001');
+    assert.strictEqual(audit.parcelId, 'BD-DHK-SAV-000001');
+    assert.strictEqual(audit.pillars.length, 5);
+    assert.ok(audit.trustScore >= 85, `Expected trust score >= 85, got ${audit.trustScore}`);
+    assert.strictEqual(audit.verdict, 'CLEARED_PROTECTED');
+    assert.ok(audit.aiExplanationEn.length > 20);
+    assert.ok(audit.aiExplanationBn.length > 20);
+    assert.ok(audit.qrPayload.startsWith('AILG:v2:BD-DHK-SAV-000001:'));
+  });
+
+  test('LandGuardService: Flags BD-DHK-SAV-000003 with critical risk caps and CRITICAL_FRAUD_FLAGGED verdict', () => {
+    const audit = LandGuardService.auditParcel('BD-DHK-SAV-000003');
+    assert.strictEqual(audit.parcelId, 'BD-DHK-SAV-000003');
+    assert.strictEqual(audit.pillars.length, 5);
+    assert.ok(audit.trustScore < 60, `Expected capped score < 60, got ${audit.trustScore}`);
+    assert.strictEqual(audit.verdict, 'CRITICAL_FRAUD_FLAGGED');
+    // Check that at least one pillar failed
+    const hasFailedPillar = audit.pillars.some((p) => p.status === 'FAIL');
+    assert.strictEqual(hasFailedPillar, true, 'At least one pillar must fail for high-risk parcel');
+  });
+
+  test('LandGuardService: Toggles biometric lock state and updates tamper-evident ledger', () => {
+    const beforeLock = LandGuardService.isLocked('BD-DHK-SAV-000002');
+    const toggled = LandGuardService.toggleLock('BD-DHK-SAV-000002');
+    assert.strictEqual(toggled, !beforeLock);
+    assert.strictEqual(LandGuardService.isLocked('BD-DHK-SAV-000002'), toggled);
+
+    // Toggle back
+    LandGuardService.toggleLock('BD-DHK-SAV-000002');
+    assert.strictEqual(LandGuardService.isLocked('BD-DHK-SAV-000002'), beforeLock);
+  });
+
+  test('LandGuardService: Exports authoritative Court & Bank Admissible Dossier', () => {
+    const dossier = LandGuardService.exportDossier('BD-DHK-SAV-000001');
+    assert.ok(dossier.dossierId.startsWith('LG-DOSSIER-BD-DHK-SAV-000001'));
+    assert.strictEqual(dossier.audit.parcelId, 'BD-DHK-SAV-000001');
+    assert.ok(dossier.qrPayload.startsWith('AILG-CERT:LG-DOSSIER-BD-DHK-SAV-000001'));
+    assert.ok(dossier.legalDisclaimerBn.includes('রেজিস্ট্রেশন অ্যাক্ট'));
+  });
+
+  // --- INTER-REGISTRY LOCK & TITLE ENCUMBRANCE SUITE ---
+  test('InterRegistryLockEngine: Clean parcel permits legitimate conveyance with clear title', () => {
+    // BD-SYL-SRM-000108 has discharged mortgage, but let us test a completely clear query
+    const outcome = InterRegistryLockEngine.assertCanConvey('BD-DHK-SAV-999999', '19922692019900011');
+    assert.strictEqual(outcome.permitted, true);
+    assert.strictEqual(outcome.operationType, 'DEED_CONVEYANCE');
+    assert.ok(outcome.reasonEn.includes('TITLE CLEAR'));
+  });
+
+  test('InterRegistryLockEngine: Judicial stay order halts conveyance and rejects new mortgages', () => {
+    const conveyanceCheck = InterRegistryLockEngine.assertCanConvey('BD-DHK-SAV-000003');
+    assert.strictEqual(conveyanceCheck.permitted, false);
+    assert.strictEqual(conveyanceCheck.blockingLock?.lockType, 'JUDICIAL_STAY');
+    assert.ok(conveyanceCheck.reasonEn.includes('CONVEYANCE STRICTLY PROHIBITED'));
+
+    const mortgageCheck = InterRegistryLockEngine.assertCanMortgage('BD-DHK-SAV-000003', 'SONALI', 1);
+    assert.strictEqual(mortgageCheck.permitted, false);
+    assert.ok(mortgageCheck.reasonEn.includes('MORTGAGE REJECTED'));
+  });
+
+  test('InterRegistryLockEngine: Double-sale prevented when parcel has active Escrow lock', () => {
+    // BD-DHK-SAV-000001 has active ESCROW_CONVEYANCE lock
+    const conveyanceCheck = InterRegistryLockEngine.assertCanConvey('BD-DHK-SAV-000001', '19952692010000099');
+    assert.strictEqual(conveyanceCheck.permitted, false);
+    assert.strictEqual(conveyanceCheck.blockingLock?.lockType, 'ESCROW_CONVEYANCE');
+    assert.ok(conveyanceCheck.reasonEn.includes('DOUBLE SALE ATTEMPT INTERCEPTED'));
+  });
+
+  test('CibGateway & InterRegistryLockEngine: Double-mortgage collision intercepted when 1st charge exists', () => {
+    // BD-DHK-SAV-000002 has active Sonali Bank 1st charge
+    const mortgageCheck = InterRegistryLockEngine.assertCanMortgage('BD-DHK-SAV-000002', 'BRAC', 1);
+    assert.strictEqual(mortgageCheck.permitted, false);
+    assert.ok(mortgageCheck.reasonEn.includes('DOUBLE MORTGAGE COLLISION'));
+
+    // Direct CIB Gateway registration attempt should fail
+    const cibRes = CibGateway.registerLien({
+      parcelId: 'BD-DHK-SAV-000002',
+      bankCode: 'BRAC',
+      bankName: 'BRAC Bank PLC',
+      branchName: 'Savar Branch',
+      routingNumber: '060261942',
+      sanctionedAmountBDT: 3000000,
+      borrowerNid: '19852691234567890',
+      borrowerName: 'Mohammad Rafiqul Islam',
+      chargeRank: 1,
+    });
+    assert.strictEqual(cibRes.success, false);
+    assert.ok(cibRes.error?.includes('DOUBLE_MORTGAGE_VIOLATION'));
+  });
+
+  test('CibGateway: Bank NOC issuance permits conditional conveyance', () => {
+    const nocRes = CibGateway.issueBankNoc('CIB-BB-2026-904812', '19852691234567890');
+    assert.strictEqual(nocRes.success, true);
+    assert.ok(nocRes.nocNumber?.startsWith('NOC-SONALI-'));
+
+    const inquiry = CibGateway.inquireCollateral('BD-DHK-SAV-000002');
+    const matched = inquiry.liens.find((l) => l.cibTrackingToken === 'CIB-BB-2026-904812');
+    assert.strictEqual(matched?.status, 'NOC_ISSUED');
+  });
+
+  test('NecService: Successfully issues Ed25519 signed Non-Encumbrance Certificate (NEC)', () => {
+    const nec = NecService.generateCertificate({
+      parcelId: 'BD-DHK-SAV-000001',
+      applicantName: 'Tanvir Ahmed',
+      applicantNid: '19882691234567891',
+    });
+    assert.ok(nec.certificateNumber.startsWith('NEC-'));
+    assert.strictEqual(nec.parcelId, 'BD-DHK-SAV-000001');
+    assert.strictEqual(nec.thirtyYearAuditChain.length, 4);
+    assert.ok(nec.ed25519Signature.length > 30);
+    assert.ok(nec.qrPayload.startsWith('BDSIG:v1:NEC-'));
+  });
+
+  test('InterRegistryLockEngine: Interactive cross-agency simulation sandbox intercepts double sale', () => {
+    const simRes = InterRegistryLockEngine.simulateCrossAgencyEvent('DOUBLE_SALE_ATTEMPT', 'BD-DHK-SAV-000001');
+    assert.strictEqual(simRes.success, true);
+    assert.strictEqual(simRes.event, 'DOUBLE_SALE_INTERCEPTED');
+    assert.ok(simRes.messageEn.includes('FRAUD PREVENTED'));
   });
 
   console.log(`\n[TEST SUMMARY] Total Passed: ${passed}, Total Failed: ${failed}`);
