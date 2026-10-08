@@ -16,6 +16,7 @@ import {
   Lock,
   Unlock,
   Banknote,
+  FileText,
 } from 'lucide-react';
 import type {
   Parcel,
@@ -38,6 +39,10 @@ import ClearanceCertificateModal from '../../components/ClearanceCertificateModa
 import DeedForensicsModal from '../../components/DeedForensicsModal';
 import EscrowPipelineModal from '../../components/EscrowPipelineModal';
 import KhasRadarModal from '../../components/KhasRadarModal';
+import DigitalEvidenceModal from '../../components/DigitalEvidenceModal';
+import AILandGuardModal from '../../components/AILandGuardModal';
+import InterRegistryLockModal from '../../components/InterRegistryLockModal';
+import NonEncumbranceCertModal from '../../components/NonEncumbranceCertModal';
 
 export default function DueDiligencePanel({ parcel }: { parcel: Parcel }) {
   const { pickLang, t } = useLanguage();
@@ -47,6 +52,10 @@ export default function DueDiligencePanel({ parcel }: { parcel: Parcel }) {
   const [deedModalOpen, setDeedModalOpen] = useState(false);
   const [escrowModalOpen, setEscrowModalOpen] = useState(false);
   const [khasRadarOpen, setKhasRadarOpen] = useState(false);
+  const [evidenceModalOpen, setEvidenceModalOpen] = useState(false);
+  const [landGuardModalOpen, setLandGuardModalOpen] = useState(false);
+  const [interRegistryModalOpen, setInterRegistryModalOpen] = useState(false);
+  const [necModalOpen, setNecModalOpen] = useState(false);
   const [litigationCases, setLitigationCases] = useState<LitigationCase[]>([]);
   const [khasResult, setKhasResult] = useState<EncroachmentCheckResult | null>(null);
   const [escrowContracts, setEscrowContracts] = useState<EscrowContract[]>([]);
@@ -99,6 +108,18 @@ export default function DueDiligencePanel({ parcel }: { parcel: Parcel }) {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm" variant="primary" onClick={() => setInterRegistryModalOpen(true)}>
+              <Lock className="h-3.5 w-3.5 text-state" />
+              {t('Inter-Registry Lock Hub', 'আন্তঃ-রেজিস্ট্রি লক')}
+            </Button>
+            <Button size="sm" variant="secondary" onClick={() => setNecModalOpen(true)}>
+              <FileText className="h-3.5 w-3.5 text-indigo" />
+              {t('Non-Encumbrance Cert (NEC)', 'দায়মুক্তি সনদ')}
+            </Button>
+            <Button size="sm" variant="secondary" onClick={() => setLandGuardModalOpen(true)}>
+              <ShieldCheck className="h-3.5 w-3.5 text-state" />
+              {t('AI LandGuard Hub', 'এআই ল্যান্ডগার্ড')}
+            </Button>
             <Button size="sm" variant="secondary" onClick={() => setEscrowModalOpen(true)}>
               <Landmark className="h-3.5 w-3.5 text-state" />
               {t('Escrow Pipeline', 'এস্ক্রো পাইপলাইন')}
@@ -110,6 +131,10 @@ export default function DueDiligencePanel({ parcel }: { parcel: Parcel }) {
             <Button size="sm" variant="secondary" onClick={() => setDeedModalOpen(true)}>
               <Scale className="h-3.5 w-3.5 text-indigo" />
               {t('Deed Forensics Scorer', 'দলিল ফরেনসিক্স যাচাই')}
+            </Button>
+            <Button size="sm" variant="secondary" onClick={() => setEvidenceModalOpen(true)}>
+              <Lock className="h-3.5 w-3.5 text-emerald-400" />
+              {t('Evidence Ledger', 'ডিজিটাল এভিডেন্স লেজার')}
             </Button>
             <Button size="sm" onClick={loadReport} disabled={loading}>
               <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
@@ -568,6 +593,45 @@ export default function DueDiligencePanel({ parcel }: { parcel: Parcel }) {
           loadReport();
         }}
         defaultParcelId={parcel.id}
+      />
+
+      {/* Digital Evidence & Tamper-Evident Ledger Modal */}
+      <DigitalEvidenceModal
+        open={evidenceModalOpen}
+        onClose={() => setEvidenceModalOpen(false)}
+        defaultParcelId={parcel.id}
+        defaultKhatianNo={parcel.khatianNo}
+      />
+
+      {/* AI LandGuard Unified Fraud Verification Modal */}
+      <AILandGuardModal
+        open={landGuardModalOpen}
+        onClose={() => setLandGuardModalOpen(false)}
+        parcelId={parcel.id}
+        khatianNo={parcel.khatianNo}
+        onOpenDeedForensics={() => setDeedModalOpen(true)}
+        onOpenKhasRadar={() => setKhasRadarOpen(true)}
+        onOpenDigitalEvidence={() => setEvidenceModalOpen(true)}
+        onStatusChanged={loadReport}
+      />
+
+      {/* Sovereign Inter-Registry Lock & Title Encumbrance Modal */}
+      <InterRegistryLockModal
+        open={interRegistryModalOpen}
+        onClose={() => setInterRegistryModalOpen(false)}
+        parcelId={parcel.id}
+        onRefreshParent={loadReport}
+        onOpenNecCert={() => {
+          setInterRegistryModalOpen(false);
+          setNecModalOpen(true);
+        }}
+      />
+
+      {/* Official Non-Encumbrance Certificate (NEC / দায়মুক্তি সনদ) Modal */}
+      <NonEncumbranceCertModal
+        open={necModalOpen}
+        onClose={() => setNecModalOpen(false)}
+        parcel={parcel}
       />
     </div>
   );
