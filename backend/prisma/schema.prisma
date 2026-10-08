@@ -48,6 +48,9 @@ model Parcel {
   documents       Document[]
   discrepancies   Discrepancy[]
   complaints      Complaint[]
+  registryLocks   RegistryLock[]
+  mortgageCharges MortgageCharge[]
+  auditLogs       EncumbranceAuditLog[]
 
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
@@ -138,4 +141,137 @@ model Document {
   fileUrl     String
   ocrText     String?
   uploadedAt  DateTime @default(now())
+}
+
+model EvidenceChainBlock {
+  id           String   @id @default(uuid())
+  blockIndex   Int
+  parcelId     String
+  modality     String   // MESSAGE, FILE, LOCATION, DEVICE_EVENT
+  title        String
+  summaryBn    String?
+  payloadJson  Json
+  payloadHash  String
+  previousHash String
+  currentHash  String
+  signature    String
+  publicKey    String
+  timestamp    DateTime @default(now())
+}
+
+enum LockType {
+  OWNER_BIOMETRIC
+  ESCROW_CONVEYANCE
+  JUDICIAL_STAY
+  MORTGAGE_LIEN
+  KHAS_DISPUTE
+}
+
+enum LockStatus {
+  ACTIVE
+  RELEASED
+  VACATED
+  EXPIRED
+}
+
+enum MortgageType {
+  FIRST_CHARGE
+  SECOND_CHARGE
+  PARI_PASSU
+  EQUITABLE_MORTGAGE
+  REGISTERED_MORTGAGE
+}
+
+enum MortgageStatus {
+  ACTIVE
+  SATISFIED
+  DEFAULTED
+  FORECLOSURE_AUCTION
+}
+
+model RegistryLock {
+  id                String      @id @default(uuid())
+  lockToken         String      @unique
+  parcelId          String
+  parcel            Parcel      @relation(fields: [parcelId], references: [id])
+  lockType          LockType
+  status            LockStatus  @default(ACTIVE)
+  priority          Int
+  
+  lockingAuthority  String
+  authorityCategory String
+  initiatorNid      String?
+  initiatorName     String
+  
+  referenceNumber   String
+  statutoryBasis    String
+  orderSummaryEn    String
+  orderSummaryBn    String
+  
+  acquiredAt        DateTime    @default(now())
+  expiresAt         DateTime?
+  releasedAt        DateTime?
+  releaseAuthority  String?
+  releaseReference  String?
+  
+  ed25519Signature  String?
+  auditHash         String
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([parcelId, status])
+  @@index([lockType, status])
+}
+
+model MortgageCharge {
+  id                    String          @id @default(uuid())
+  chargeReference       String          @unique
+  parcelId              String
+  parcel                Parcel          @relation(fields: [parcelId], references: [id])
+  
+  bankName              String
+  branchName            String
+  routingNumber         String
+  cibTrackingToken      String
+  
+  mortgageType          MortgageType    @default(FIRST_CHARGE)
+  chargeRank            Int             @default(1)
+  sanctionedAmountBDT   Float
+  disbursedAmountBDT    Float
+  interestRatePercent   Float
+  lienDescription       String
+  
+  borrowerNid           String
+  borrowerName          String
+  borrowerPhone         String
+  deedOfMortgageNo      String?
+  deedRegistrationDate  DateTime?
+  
+  status                MortgageStatus  @default(ACTIVE)
+  isNoObjectionIssued   Boolean         @default(false)
+  nocReferenceNumber    String?
+  satisfactionDate      DateTime?
+  satisfactionDeedNo    String?
+  
+  registeredAt          DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  @@index([parcelId, status])
+  @@index([borrowerNid])
+  @@index([cibTrackingToken])
+}
+
+model EncumbranceAuditLog {
+  id                String      @id @default(uuid())
+  parcelId          String
+  parcel            Parcel      @relation(fields: [parcelId], references: [id])
+  eventType         String
+  initiatingAgency   String
+  actorNid          String
+  actorName         String
+  payloadDetails    Json
+  resultStatus      String
+  securityVerdict   String
+  timestamp         DateTime    @default(now())
 }
