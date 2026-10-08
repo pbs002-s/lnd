@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient, MutationStatus } from '@prisma/client';
+import { InterRegistryLockEngine } from '../services/interRegistryLockEngine';
 import { ok, fail } from '../lib/respond';
 
 const router = Router();
@@ -36,6 +37,12 @@ const NEXT_STAGES: Record<MutationStatus, { nextStatus: MutationStatus; stageTex
 router.post('/', async (req: Request, res: Response) => {
   const { parcelId, applicantName, applicantNid, applicantPhone, proposedOwner, dcrAmount, remarks } = req.body;
   try {
+    // Assert sovereign registry locks
+    const lockCheck = InterRegistryLockEngine.assertCanMutate(parcelId, applicantNid);
+    if (!lockCheck.permitted) {
+      return fail(res, `Mutation rejected by sovereign lock: ${lockCheck.reasonEn}`, 409);
+    }
+
     const caseNumber = `MUT-${new Date().getFullYear()}-DH-${Math.floor(1000 + Math.random() * 9000)}`;
     const mutation = await prisma.mutation.create({
       data: {
@@ -86,6 +93,13 @@ router.patch('/:id/advance', async (req: Request, res: Response) => {
 
     let targetStatus: MutationStatus = existing.status;
     let targetStage = existing.currentStage;
+
+    if (action !== 'REJECT') {
+      const lockCheck = InterRegistryLockEngine.assertCanMutate(existing.parcelId);
+      if (!lockCheck.permitted) {
+        return fail(res, `Cannot advance mutation. Sovereign lock active: ${lockCheck.reasonEn}`, 409);
+      }
+    }
 
     if (action === 'REJECT') {
       targetStatus = MutationStatus.REJECTED;
