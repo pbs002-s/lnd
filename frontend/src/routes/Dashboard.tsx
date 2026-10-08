@@ -48,6 +48,7 @@ import DisputeModal from '../components/DisputeModal';
 import LandLockModal from '../components/LandLockModal';
 import AlertRadarModal from '../components/AlertRadarModal';
 import BhumiSahayakWidget from '../components/BhumiSahayakWidget';
+import AILandGuardModal from '../components/AILandGuardModal';
 import type { Theme } from '../lib/theme';
 
 export type PersonaId = 'citizen' | 'buyer' | 'officer' | 'amin' | 'super_admin';
@@ -95,6 +96,7 @@ export default function Dashboard({ theme, onToggleTheme }: { theme: Theme; onTo
   const [disputeOpen, setDisputeOpen] = useState(false);
   const [lockOpen, setLockOpen] = useState(false);
   const [radarOpen, setRadarOpen] = useState(false);
+  const [landGuardOpen, setLandGuardOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<Parcel[]>([]);
   const [searchFocused, setSearchFocused] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -535,6 +537,21 @@ export default function Dashboard({ theme, onToggleTheme }: { theme: Theme; onTo
               {parcel && (
                 <Button
                   size="sm"
+                  variant="primary"
+                  onClick={() => setLandGuardOpen(true)}
+                  className="flex items-center gap-1.5 shadow-sm"
+                  title="AI LandGuard — Smart Land Ownership Verification & Fraud Detection Hub"
+                >
+                  <ShieldCheck className="h-3.5 w-3.5 text-state" />
+                  <span className="font-semibold">{t('AI LandGuard', 'এআই ল্যান্ডগার্ড')}</span>
+                  <span className="rounded bg-state-soft px-1.5 py-0.2 text-[10px] font-bold text-state border border-state/30">
+                    {parcel.isLocked ? '93%' : '33%'}
+                  </span>
+                </Button>
+              )}
+              {parcel && (
+                <Button
+                  size="sm"
                   variant={parcel.isLocked ? 'primary' : 'secondary'}
                   onClick={() => setLockOpen(true)}
                   className="hidden sm:inline-flex"
@@ -759,6 +776,35 @@ export default function Dashboard({ theme, onToggleTheme }: { theme: Theme; onTo
           open={radarOpen}
           onClose={() => setRadarOpen(false)}
           parcel={parcel}
+        />
+      )}
+      {parcel && (
+        <AILandGuardModal
+          open={landGuardOpen}
+          onClose={() => setLandGuardOpen(false)}
+          parcelId={parcel.id}
+          khatianNo={parcel.khatianNo}
+          onOpenLandLock={() => {
+            setLandGuardOpen(false);
+            setLockOpen(true);
+          }}
+          onOpenDeedForensics={() => {
+            setLandGuardOpen(false);
+            setTab('diligence');
+          }}
+          onOpenDroneCadastre={() => {
+            setLandGuardOpen(false);
+            setTab('map');
+          }}
+          onOpenKhasRadar={() => {
+            setLandGuardOpen(false);
+            setTab('diligence');
+          }}
+          onOpenDigitalEvidence={() => {
+            setLandGuardOpen(false);
+            setTab('overview');
+          }}
+          onStatusChanged={() => load(parcelId)}
         />
       )}
 
