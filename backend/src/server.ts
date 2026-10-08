@@ -18,6 +18,9 @@ import escrowRoutes from './routes/escrow';
 import khasRoutes from './routes/khas';
 import surveyRoutes from './routes/survey';
 import droneRoutes from './routes/drone';
+import evidenceRoutes from './routes/evidence';
+import landGuardRoutes from './routes/landGuard';
+import registryLockRoutes from './routes/registryLocks';
 import { ok, fail } from './lib/respond';
 
 const app = express();
@@ -86,6 +89,9 @@ app.use('/api/escrow', escrowRoutes);
 app.use('/api/khas', khasRoutes);
 app.use('/api/survey', surveyRoutes);
 app.use('/api/drone', droneRoutes);
+app.use('/api/evidence', evidenceRoutes);
+app.use('/api/landguard', landGuardRoutes);
+app.use('/api/registry-locks', registryLockRoutes);
 
 // 404 for unmatched API routes
 app.use('/api', (req: Request, res: Response) => {
